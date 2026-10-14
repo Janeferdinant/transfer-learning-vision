@@ -16,6 +16,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from numpy.typing import ArrayLike
 
 from .metrics import (
     TimeToTarget,
@@ -67,7 +68,7 @@ def primary_target(runs: pd.DataFrame, fraction: float = PRIMARY_FRACTION) -> fl
     return fraction * float(s.final_val_accuracy.mean())
 
 
-def _ci(v: Sequence[float]) -> tuple[float, float]:
+def _ci(v: ArrayLike) -> tuple[float, float]:
     return bootstrap_ci(v, n_boot=10000, seed=0)
 
 

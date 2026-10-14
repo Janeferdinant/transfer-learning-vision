@@ -20,11 +20,9 @@ import numpy as np  # noqa: E402
 import tensorflow as tf  # noqa: E402
 
 from .config import BATCH_SIZE, RunConfig, steps_per_epoch  # noqa: E402
-from .data import select_per_class  # noqa: E402
+from .data import Splits, select_per_class  # noqa: E402
 from .models import build_model, count_params  # noqa: E402
 from .timing import EpochTimer  # noqa: E402
-
-Splits = tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]
 
 
 class TimingCallback(keras.callbacks.Callback):

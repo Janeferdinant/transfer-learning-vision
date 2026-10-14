@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Training Curve Explorer</title>
-<meta name="description" content="Explore recorded CPU training curves for three image-classification approaches and see time-to-target change with the target accuracy.">
+<meta name="description" content="Explore recorded CPU training curves for from-scratch, frozen and fine-tuned image classifiers across two datasets, four pretrained backbones and training-set sizes, and see time-to-target change with the target accuracy.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 27 L3 5 M3 27 L29 27' stroke='%2352514e' stroke-width='2' fill='none'/%3E%3Cpath d='M4 25 L10 10 L16 8 L28 6' stroke='%23eb6834' stroke-width='3' fill='none'/%3E%3Cpath d='M4 25 L12 20 L20 17 L28 15' stroke='%232a78d6' stroke-width='3' fill='none'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -70,6 +70,11 @@ p { margin: 0 0 12px; }
 .slider-row label { font-weight: 600; }
 .slider-row output { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 4.5ch; }
 input[type=range] { flex: 1 1 220px; min-width: 160px; accent-color: var(--accent); height: 28px; }
+.selectors { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.selectors label { font-weight: 600; }
+select { font: inherit; color: var(--text-primary); background: var(--surface-0); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-height: 36px; max-width: 100%; }
+.seg { display: inline-flex; gap: 8px 16px; flex-wrap: wrap; }
+.seg label { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; cursor: pointer; color: var(--text-secondary); }
 .toggles { display: flex; gap: 8px 16px; flex-wrap: wrap; }
 .toggles label { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; color: var(--text-secondary); }
 .swatch { width: 18px; height: 0; border-top: 3px solid; display: inline-block; position: relative; }
@@ -120,9 +125,16 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 <body>
 <main>
   <h1>Training Curve Explorer</h1>
-  <p class="lede">Validation accuracy against wall-clock time and against epochs for every recorded run, on CPU. Move the target to see how long each approach needed to first reach it. Everything below is computed in your browser from the recorded curves; there is no server.</p>
+  <p class="lede">Validation accuracy against wall-clock time and against epochs for every recorded run, on CPU. Pick a dataset and a pretrained backbone, then move the target to see how long each approach needed to first reach it. Further down: how the picture changes with the number of training images per class, and a cost comparison of all backbones. Everything is computed in your browser from the recorded curves; there is no server.</p>
 
   <section class="card controls" aria-label="Controls">
+    <div class="selectors">
+      <label for="dataset">Dataset</label>
+      <select id="dataset"></select>
+      <label for="backbone">Pretrained backbone</label>
+      <select id="backbone"></select>
+    </div>
+    <p class="note" id="selection-note" style="margin:0"></p>
     <div class="slider-row">
       <label for="target">Target validation accuracy</label>
       <input id="target" type="range" min="0.30" max="0.95" step="0.01" value="0.60" aria-describedby="target-out">
@@ -162,10 +174,39 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
     <p class="provenance" id="provenance"></p>
   </section>
 
+  <section class="card" aria-label="Data efficiency">
+    <h2>Data efficiency: how many training images per class?</h2>
+    <p class="note" style="margin-top:0">MobileNetV2 variants trained on 10, 25, 50, 100 or all training images per class (validation and test sets stay fixed). Each point is the mean of the recorded seeds, small dots are single seeds; hollow markers mean some runs never reached the target.</p>
+    <div class="seg" role="radiogroup" aria-label="Metric">
+      <label><input type="radio" name="de-metric" value="acc" checked> Final validation accuracy</label>
+      <label><input type="radio" name="de-metric" value="ttt"> Time to target (uses the slider above)</label>
+    </div>
+    <div class="chart-wrap" id="wrap-de" style="margin-top:8px"></div>
+    <div class="table-scroll">
+      <table id="detable">
+        <thead><tr><th>Images per class</th><th>Approach</th><th>Epoch budget</th><th>Final val accuracy</th><th>Runs reaching target</th><th>Mean time to target (s)</th><th>Mean epochs to target</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note" id="de-note" style="margin-top:8px"></p>
+  </section>
+
+  <section class="card" aria-label="Backbone comparison">
+    <h2>Backbone comparison on <span id="bb-ds">this dataset</span></h2>
+    <p class="note" style="margin-top:0">All backbones use the same pipeline and seeds, trained on all training images. Time to target follows the slider above.</p>
+    <div class="table-scroll">
+      <table id="bbtable">
+        <thead><tr><th>Backbone</th><th>Approach</th><th>Trainable / total parameters</th><th>Epoch 1 (s)</th><th>Steady epoch (s)</th><th>Final val accuracy</th><th>Runs reaching target</th><th>Mean time to target (s)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note" id="bb-note" style="margin-top:8px"></p>
+  </section>
+
   <section class="card" aria-label="How it works">
     <details open>
       <summary>How it works: feature extraction vs fine-tuning</summary>
-      <p style="margin-top:8px">All three approaches classify the same small flower images and share the same input scaling, augmentation, classification head, optimiser family and batch size. They differ only in which weights start pretrained and which weights are updated.</p>
+      <p style="margin-top:8px">All three approaches classify the same small images (flowers or satellite tiles) and share the same input scaling, augmentation, classification head, optimiser family and batch size. They differ only in which weights start pretrained and which weights are updated.</p>
       <div class="how">
         <figure>
           <svg viewBox="0 0 260 150" role="img" aria-label="From scratch: every layer trains from random weights">
@@ -195,29 +236,32 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
             <line class="diag-train" stroke="var(--series-finetune)" x1="96" x2="252" y1="108" y2="108"/>
             <text class="diag-sub" x="130" y="130" text-anchor="middle">top backbone layers and head train</text>
           </svg>
-          <figcaption><b>Fine-tuning.</b> The same backbone, but its last blocks are also updated so high-level features can adapt to flowers. This costs extra compute per epoch.</figcaption>
+          <figcaption><b>Fine-tuning.</b> The same backbone, but its last blocks are also updated so high-level features can adapt to the new images. This costs extra compute per epoch.</figcaption>
         </figure>
       </div>
       <p><b>Time-to-target</b> is the cumulative wall-clock training time (including the per-epoch validation pass) at the end of the first epoch whose validation accuracy is at least the target. A run that never reaches the target is charged its full budget, so its time is a lower bound. The saving is one minus the mean time of an approach divided by the mean time of training from scratch.</p>
     </details>
   </section>
 
-  <p class="note" style="margin-top:16px">Independent experiment on public data (TF Flowers, CC-BY images); the recorded curves come from the runs committed in this repository. This page does not reproduce, and is not, the training-time result reported on the author's CV.</p>
+  <p class="note" style="margin-top:16px">Independent experiment on public data (TF Flowers, CC BY 2.0 photos; EuroSAT RGB, MIT licence); the recorded curves come from the runs committed in this repository. This page does not reproduce, and is not, the training-time result reported on the author's CV.</p>
   <noscript><p class="fail">This page needs JavaScript to draw the charts.</p></noscript>
 </main>
 
 <script src="curves.js"></script>
+<script src="explorer-data.js"></script>
 <script>
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
-  var D = window.CURVES;
-  if (!D) { document.querySelector("main").insertAdjacentHTML("beforeend", '<p class="fail">curves.js did not load.</p>'); return; }
+  var LEGACY = window.CURVES, E = window.EXPLORER;
+  if (!LEGACY && !E) { document.querySelector("main").insertAdjacentHTML("beforeend", '<p class="fail">curves.js did not load.</p>'); return; }
+  var BB_LABELS = { mobilenetv2: "MobileNetV2", mobilenetv3small: "MobileNetV3Small", efficientnetb0: "EfficientNetB0", resnet50: "ResNet50" };
+  var state = { ds: "flowers", bb: "mobilenetv2" };
+  var D, APPS;
   var LABELS = { scratch: "From scratch", frozen: "Feature extraction (frozen)", finetune: "Fine-tuning" };
   var SHORT = { scratch: "Scratch", frozen: "Frozen", finetune: "Fine-tune" };
   var MARKERS = { scratch: "circle", frozen: "square", finetune: "diamond" };
-  var APPS = D.approaches;
-  var visible = {}; APPS.forEach(function (a) { visible[a] = true; });
+  var visible = { scratch: true, frozen: true, finetune: true };
   var target = 0.60;
 
   function el(name, attrs, parent) {
@@ -230,20 +274,32 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
   function pct(v) { return (v * 100).toFixed(0) + "%"; }
   function mean(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s / a.length; }
 
-  // ----- derived data -------------------------------------------------------
-  var nEpochs = D.meta.epochs;
-  var meanCurve = {};
-  APPS.forEach(function (a) {
-    var runs = D.curves[a], pts = [];
-    for (var e = 0; e < nEpochs; e++) {
-      pts.push({ epoch: e + 1,
-        sec: mean(runs.map(function (r) { return r.seconds[e]; })),
-        acc: mean(runs.map(function (r) { return r.val_accuracy[e]; })) });
-    }
-    meanCurve[a] = pts;
-  });
-  var maxSec = 0, maxEp = nEpochs;
-  APPS.forEach(function (a) { D.curves[a].forEach(function (r) { maxSec = Math.max(maxSec, r.seconds[r.seconds.length - 1]); }); });
+  // ----- selection and derived data -----------------------------------------
+  // Flowers + MobileNetV2 shows the original 10-seed run (curves.js); every other
+  // combination comes from the suite runs in explorer-data.js (5 seeds).
+  function selection() {
+    if (state.ds === "flowers" && state.bb === "mobilenetv2" && LEGACY) return LEGACY;
+    var d = E.datasets[state.ds], b = d.backbones[state.bb];
+    var c = { scratch: d.scratch.runs, frozen: b.frozen.runs, finetune: b.finetune.runs };
+    return { meta: { date: E.meta.date, n_seeds: c.scratch.length, hardware: E.meta.hardware, epochs: c.scratch[0].seconds.length },
+             approaches: ["scratch", "frozen", "finetune"], curves: c };
+  }
+  var nEpochs, meanCurve, maxSec, maxEp;
+  function derive() {
+    D = selection(); APPS = D.approaches; nEpochs = D.meta.epochs; meanCurve = {};
+    APPS.forEach(function (a) {
+      var runs = D.curves[a], pts = [];
+      for (var e = 0; e < nEpochs; e++) {
+        pts.push({ epoch: e + 1,
+          sec: mean(runs.map(function (r) { return r.seconds[e]; })),
+          acc: mean(runs.map(function (r) { return r.val_accuracy[e]; })) });
+      }
+      meanCurve[a] = pts;
+    });
+    maxSec = 0; maxEp = nEpochs;
+    APPS.forEach(function (a) { D.curves[a].forEach(function (r) { maxSec = Math.max(maxSec, r.seconds[r.seconds.length - 1]); }); });
+  }
+  derive();
 
   function niceMax(v) {
     var steps = [10, 20, 25, 30, 40, 50, 60, 75, 80, 100, 120, 150, 200, 250, 300, 400, 500];
@@ -259,14 +315,15 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
     for (var i = 0; i < accs.length; i++) if (accs[i] >= t - 1e-12) return i;
     return -1;
   }
-  function tttFor(a, t) {
+  function tttFor(a, t) { return tttRuns(D.curves[a], t); }
+  function tttRuns(runs, t) {
     var secs = [], eps = [], reached = 0;
-    D.curves[a].forEach(function (r) {
+    runs.forEach(function (r) {
       var i = firstCross(r.val_accuracy, t);
       if (i >= 0) { secs.push(r.seconds[i]); eps.push(i + 1); reached++; }
       else { secs.push(r.seconds[r.seconds.length - 1]); eps.push(r.seconds.length); }
     });
-    return { n: D.curves[a].length, reached: reached, sec: mean(secs), ep: mean(eps) };
+    return { n: runs.length, reached: reached, sec: mean(secs), ep: mean(eps), secs: secs, eps: eps };
   }
 
   // ----- chart --------------------------------------------------------------
@@ -419,9 +476,121 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
       : "Every run reached this target.";
   }
 
+  // ----- data efficiency ------------------------------------------------------
+  var deMetric = "acc";
+  function deData() {
+    if (!E || !E.datasets[state.ds] || !E.datasets[state.ds].dataEff.scratch) return null;
+    return E.datasets[state.ds].dataEff;
+  }
+  function renderDE() {
+    var wrap = document.getElementById("wrap-de"); wrap.innerHTML = "";
+    var tb = document.querySelector("#detable tbody"); tb.innerHTML = "";
+    var DE = deData(), note = document.getElementById("de-note");
+    if (!DE) { note.textContent = "No data-efficiency runs are recorded for this dataset."; return; }
+    var ns = Object.keys(DE.scratch).map(Number).sort(function (a, b) { return a - b; });
+    var W = Math.max(300, Math.min(900, wrap.clientWidth || 700)), H = W < 480 ? 300 : 320;
+    var ML = 48, MR = 16, MT = 14, MB = 44, pw = W - ML - MR, ph = H - MT - MB;
+    var svg = el("svg", { "class": "chart", viewBox: "0 0 " + W + " " + H, role: "img",
+      "aria-label": (deMetric === "acc" ? "Final validation accuracy" : "Time to target") + " versus training images per class" }, wrap);
+    var lo = Math.log(ns[0]), hi = Math.log(ns[ns.length - 1]);
+    function X(n) { return ML + (Math.log(n) - lo) / (hi - lo) * pw; }
+    var rows = [], ymax = 1, ymin = 0;
+    APPS_ALL.forEach(function (a) {
+      ns.forEach(function (n) {
+        var runs = DE[a][String(n)]; if (!runs) return;
+        var t = tttRuns(runs, target);
+        var finals = runs.map(function (r) { return r.val_accuracy[r.val_accuracy.length - 1]; });
+        rows.push({ a: a, n: n, runs: runs, t: t, finals: finals, facc: mean(finals), epochs: runs[0].seconds.length });
+      });
+    });
+    if (deMetric === "ttt") {
+      ymax = 0; rows.forEach(function (r) { r.t.secs.forEach(function (v) { ymax = Math.max(ymax, v); }); });
+      ymax = niceMax(ymax * 1.05);
+    } else {
+      var mn = 1; rows.forEach(function (r) { r.finals.forEach(function (v) { mn = Math.min(mn, v); }); });
+      ymin = Math.max(0, Math.floor(mn * 10) / 10 - 0.0);
+    }
+    function Y(v) { return MT + (1 - (v - ymin) / (ymax - ymin)) * ph; }
+    var g = el("g", {}, svg), nt = 5;
+    for (var i = 0; i <= nt; i++) {
+      var v = ymin + (ymax - ymin) * i / nt;
+      el("line", { x1: ML, x2: W - MR, y1: Y(v), y2: Y(v), stroke: "var(--grid)", "stroke-width": 1 }, g);
+      var tl = el("text", { x: ML - 8, y: Y(v) + 4, "text-anchor": "end" }, g);
+      tl.textContent = deMetric === "acc" ? pct(v) : (ymax <= 30 ? v.toFixed(0) : Math.round(v));
+    }
+    ns.forEach(function (n) { var t = el("text", { x: X(n), y: H - MB + 16, "text-anchor": "middle" }, g); t.textContent = n; });
+    el("line", { x1: ML, x2: W - MR, y1: Y(ymin), y2: Y(ymin), stroke: "var(--text-muted)", "stroke-width": 1 }, g);
+    var xt = el("text", { x: ML + pw / 2, y: H - 6, "text-anchor": "middle", "class": "axis-title" }, g);
+    xt.textContent = "Training images per class (log scale)";
+    var yt = el("text", { transform: "translate(12," + (MT + ph / 2) + ") rotate(-90)", "text-anchor": "middle", "class": "axis-title" }, g);
+    yt.textContent = deMetric === "acc" ? "Final validation accuracy" : "Seconds to target (hollow: not all runs reached it)";
+    APPS_ALL.forEach(function (a) {
+      if (!visible[a]) return;
+      var mine = rows.filter(function (r) { return r.a === a; });
+      var d = mine.map(function (r, i) { return (i ? "L" : "M") + X(r.n).toFixed(1) + " " + Y(deMetric === "acc" ? r.facc : r.t.sec).toFixed(1); }).join("");
+      el("path", { d: d, fill: "none", stroke: color(a), "stroke-width": 2.5, "stroke-linejoin": "round" }, svg);
+      mine.forEach(function (r) {
+        var vals = deMetric === "acc" ? r.finals : r.t.secs;
+        vals.forEach(function (v, k) {
+          el("circle", { cx: X(r.n) + (k - (vals.length - 1) / 2) * 2.5, cy: Y(v), r: 2, fill: color(a), "fill-opacity": 0.45 }, svg);
+        });
+        var cens = deMetric === "ttt" && r.t.reached < r.t.n;
+        var m = deMetric === "acc" ? r.facc : r.t.sec;
+        el("circle", { cx: X(r.n), cy: Y(m), r: 5, fill: cens ? "var(--surface-1)" : color(a), stroke: color(a), "stroke-width": 2 }, svg);
+      });
+      var last = mine[mine.length - 1];
+      if (last) {
+        var lt = el("text", { x: W - MR - 2, y: Y(deMetric === "acc" ? last.facc : last.t.sec) - 9, "text-anchor": "end", "class": "label-ink" }, svg);
+        lt.textContent = SHORT[a];
+      }
+    });
+    rows.sort(function (p, q) { return p.n - q.n || APPS_ALL.indexOf(p.a) - APPS_ALL.indexOf(q.a); });
+    rows.forEach(function (r) {
+      var cens = r.t.reached < r.t.n, ge = cens ? "≥ " : "";
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td data-label="Images per class">' + r.n + '</td><td data-label="Approach"><span class="dot" style="background:' + color(r.a) + '"></span>' + SHORT[r.a] + "</td>" +
+        '<td class="num" data-label="Epoch budget">' + r.epochs + "</td>" +
+        '<td class="num" data-label="Final val accuracy">' + pct(r.facc) + "</td>" +
+        '<td class="num" data-label="Runs reaching target">' + r.t.reached + " of " + r.t.n + "</td>" +
+        '<td class="num" data-label="Mean time to target (s)">' + ge + r.t.sec.toFixed(1) + "</td>" +
+        '<td class="num" data-label="Mean epochs to target">' + ge + r.t.ep.toFixed(1) + "</td>";
+      tb.appendChild(tr);
+    });
+    note.textContent = "The epoch budget grows for small training sets so that every run gets at least 200 optimiser steps; the validation pass after every epoch is part of the measured time, which is why small sets are not proportionally faster. Time to target is at " + pct(target) + ".";
+  }
+  var APPS_ALL = ["scratch", "frozen", "finetune"];
+
+  // ----- backbone comparison ---------------------------------------------------
+  function renderBackbones() {
+    var tb = document.querySelector("#bbtable tbody"); tb.innerHTML = "";
+    var d = E && E.datasets[state.ds], note = document.getElementById("bb-note");
+    document.getElementById("bb-ds").textContent = d ? d.label : "this dataset";
+    if (!d || !d.scratch) { note.textContent = "No backbone runs are recorded for this dataset."; return; }
+    function add(name, ap, entry) {
+      var runs = entry.runs, t = tttRuns(runs, target), ge = t.reached < t.n ? "≥ " : "";
+      var first = mean(runs.map(function (r) { return r.seconds[0]; }));
+      var steady = mean(runs.map(function (r) { return (r.seconds[r.seconds.length - 1] - r.seconds[0]) / (r.seconds.length - 1); }));
+      var fin = mean(runs.map(function (r) { return r.val_accuracy[r.val_accuracy.length - 1]; }));
+      var tr = document.createElement("tr");
+      tr.innerHTML = '<td><span class="dot" style="background:' + color(ap) + '"></span>' + name + '</td><td data-label="Approach">' + SHORT[ap] + "</td>" +
+        '<td class="num" data-label="Trainable / total parameters">' + entry.trainable.toLocaleString("en-US") + " / " + entry.total.toLocaleString("en-US") + "</td>" +
+        '<td class="num" data-label="Epoch 1 (s)">' + first.toFixed(1) + "</td>" +
+        '<td class="num" data-label="Steady epoch (s)">' + steady.toFixed(2) + "</td>" +
+        '<td class="num" data-label="Final val accuracy">' + pct(fin) + "</td>" +
+        '<td class="num" data-label="Runs reaching target">' + t.reached + " of " + t.n + "</td>" +
+        '<td class="num" data-label="Mean time to target (s)">' + ge + t.sec.toFixed(1) + "</td>";
+      tb.appendChild(tr);
+    }
+    add("Small CNN", "scratch", d.scratch);
+    Object.keys(d.backbones).forEach(function (b) {
+      ["frozen", "finetune"].forEach(function (ap) { if (d.backbones[b][ap]) add(BB_LABELS[b] || b, ap, d.backbones[b][ap]); });
+    });
+    note.textContent = "Each row is the mean over " + d.scratch.runs.length + " seeds. Steady epoch excludes epoch 1, which includes one-off graph tracing. Time to target is at " + pct(target) + ".";
+  }
+
   // ----- wiring -------------------------------------------------------------
   var tg = document.getElementById("toggles");
-  APPS.forEach(function (a) {
+  ["scratch", "frozen", "finetune"].forEach(function (a) {
     var l = document.createElement("label");
     l.innerHTML = '<input type="checkbox" checked> <span class="swatch" style="border-color:' + color(a) + '"></span> ' + LABELS[a];
     l.querySelector("input").addEventListener("change", function (e) { visible[a] = e.target.checked; update(); });
@@ -431,13 +600,51 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
   function update() {
     document.getElementById("target-out").textContent = pct(target);
     document.getElementById("target-inline").textContent = pct(target);
-    drawTime(); drawEpoch(); renderTable();
+    drawTime(); drawEpoch(); renderTable(); renderDE(); renderBackbones();
   }
   slider.addEventListener("input", function () { target = parseFloat(slider.value); update(); });
-  var m = D.meta;
-  document.getElementById("provenance").textContent =
-    "Recorded " + m.date + ", " + m.n_seeds + " seeds per approach, " + m.epochs + " epochs each. Hardware: " +
-    m.hardware.cpu + ", " + m.hardware.logical_cores + " logical cores, CPU only. Times are wall-clock seconds from a monotonic timer and include the per-epoch validation pass.";
+
+  var dsSel = document.getElementById("dataset"), bbSel = document.getElementById("backbone");
+  var DS_LABELS = { flowers: "TF Flowers (5 classes)", eurosat: "EuroSAT RGB (10 classes)" };
+  function fillBackbones() {
+    var names = ["mobilenetv2"];
+    if (E && E.datasets[state.ds]) Object.keys(E.datasets[state.ds].backbones).forEach(function (b) { if (names.indexOf(b) < 0) names.push(b); });
+    names = names.filter(function (b) { return (state.ds === "flowers" && b === "mobilenetv2" && LEGACY) || (E && E.datasets[state.ds].backbones[b] && E.datasets[state.ds].backbones[b].finetune); });
+    bbSel.innerHTML = "";
+    names.forEach(function (b) { var o = document.createElement("option"); o.value = b; o.textContent = BB_LABELS[b] || b; bbSel.appendChild(o); });
+    if (names.indexOf(state.bb) < 0) state.bb = names[0];
+    bbSel.value = state.bb;
+  }
+  var dsNames = [];
+  if (LEGACY) dsNames.push("flowers");
+  if (E) Object.keys(E.datasets).forEach(function (d) { if (dsNames.indexOf(d) < 0 && E.datasets[d].scratch) dsNames.push(d); });
+  dsNames.forEach(function (d) { var o = document.createElement("option"); o.value = d; o.textContent = DS_LABELS[d] || d; dsSel.appendChild(o); });
+  function provenance() {
+    var m = D.meta, legacy = D === LEGACY;
+    document.getElementById("provenance").textContent =
+      "Recorded " + m.date + ", " + m.n_seeds + " seeds per approach, " + m.epochs + " epochs each. Hardware: " +
+      m.hardware.cpu + ", " + m.hardware.logical_cores + " logical cores, CPU only. Times are wall-clock seconds from a monotonic timer and include the per-epoch validation pass.";
+    document.getElementById("selection-note").textContent = legacy
+      ? "Showing the original 10-seed TF Flowers run with MobileNetV2. The scratch baseline is the same small CNN for every backbone."
+      : "Showing " + (DS_LABELS[state.ds] || state.ds) + " with " + (BB_LABELS[state.bb] || state.bb) + " (" + m.n_seeds + " seeds). The scratch baseline is the same small CNN for every backbone.";
+  }
+  function rebuild() {
+    derive();
+    drawTime = makeChart("wrap-time", "time"); drawEpoch = makeChart("wrap-epoch", "epoch");
+    provenance(); update();
+  }
+  dsSel.addEventListener("change", function () { state.ds = dsSel.value; fillBackbones(); rebuild(); });
+  bbSel.addEventListener("change", function () { state.bb = bbSel.value; rebuild(); });
+  Array.prototype.forEach.call(document.querySelectorAll("input[name=de-metric]"), function (r) {
+    r.addEventListener("change", function () { deMetric = r.value; renderDE(); });
+  });
+  dsSel.value = state.ds; fillBackbones();
+  var lastW2 = window.innerWidth, timer2 = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(timer2);
+    timer2 = setTimeout(function () { if (window.innerWidth !== lastW2) { lastW2 = window.innerWidth; renderDE(); } }, 150);
+  });
+  provenance();
   update();
 })();
 </script>

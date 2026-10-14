@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 
 @dataclass(frozen=True)
@@ -21,7 +22,7 @@ class TimeToTarget:
     epochs: int | None
 
 
-def time_to_target(times: Sequence[float], accs: Sequence[float], target: float) -> TimeToTarget:
+def time_to_target(times: ArrayLike, accs: ArrayLike, target: float) -> TimeToTarget:
     """First epoch whose validation accuracy is >= target.
 
     ``times[i]`` is the cumulative wall-clock time at the end of epoch i+1 and

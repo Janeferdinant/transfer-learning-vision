@@ -22,7 +22,7 @@ ORDER = ["scratch", "frozen", "finetune"]
 def _per_run(epochs: pd.DataFrame, approach: str):
     for seed, g in epochs[epochs.approach == approach].groupby("seed"):
         g = g.sort_values("epoch")
-        yield int(seed), g["seconds"].to_numpy(), g["val_accuracy"].to_numpy()
+        yield int(seed), g["seconds"].to_numpy(), g["val_accuracy"].to_numpy()  # type: ignore[arg-type]
 
 
 def _ttt_arrays(epochs: pd.DataFrame, approach: str, target: float):

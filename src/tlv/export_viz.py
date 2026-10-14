@@ -31,7 +31,7 @@ def build(epochs: pd.DataFrame, hardware: dict, run_date: str) -> dict:
         runs = []
         for seed, g in epochs[epochs.approach == ap].groupby("seed"):
             g = g.sort_values("epoch")
-            runs.append(dict(seed=int(seed),
+            runs.append(dict(seed=int(seed),  # type: ignore[arg-type]
                              seconds=[round(float(v), 3) for v in g.seconds],
                              val_accuracy=[round(float(v), 4) for v in g.val_accuracy]))
         curves[ap] = runs
@@ -46,7 +46,7 @@ def _runs(runs: pd.DataFrame, epochs: pd.DataFrame) -> list[dict[str, Any]]:
     by = {rid: g.sort_values("epoch") for rid, g in epochs.groupby("run_id")}
     for r in runs.sort_values("seed").itertuples():
         g = by[r.run_id]
-        out.append(dict(seed=int(r.seed), seconds=[round(float(v), 3) for v in g.seconds],
+        out.append(dict(seed=int(r.seed), seconds=[round(float(v), 3) for v in g.seconds],  # type: ignore[arg-type]
                         val_accuracy=[round(float(v), 4) for v in g.val_accuracy]))
     return out
 
@@ -75,7 +75,7 @@ def build_explorer(results: Path, run_date: str, hardware: dict) -> dict[str, An
             runs["train_per_class"] = runs["train_per_class"].fillna(-1).astype(int)
             for ap in ORDER:
                 entry["dataEff"][ap] = {}
-                for n, g in runs[runs.approach == ap].groupby("train_per_class"):
+                for _, g in runs[runs.approach == ap].groupby("train_per_class"):
                     per_class = int(g.n_train.iloc[0] // info["classes"])
                     entry["dataEff"][ap][str(per_class)] = _runs(g, ep)
         data["datasets"][ds] = entry

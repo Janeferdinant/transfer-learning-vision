@@ -90,7 +90,7 @@ def select_per_class(labels, n_per_class: int | None, seed: int) -> np.ndarray:
 
 
 def _as_bytes(x) -> bytes:
-    return x if isinstance(x, (bytes, bytearray)) else np.ascontiguousarray(x).tobytes()
+    return bytes(x) if isinstance(x, (bytes, bytearray)) else np.ascontiguousarray(x).tobytes()
 
 
 def dedupe_by_hash(items: Iterable) -> np.ndarray:
@@ -242,6 +242,14 @@ def build_cache(data_dir: Path, image_size: int = 96, n_per_class: int = 240,
     return cache
 
 
-def load_splits(cache: Path) -> tuple[tuple[np.ndarray, np.ndarray], ...]:
+Pair = tuple[np.ndarray, np.ndarray]
+Splits = tuple[Pair, Pair, Pair]
+
+
+def load_splits(cache: Path) -> Splits:
     z = np.load(cache)
-    return tuple((z["X"][z[k]], z["y"][z[k]]) for k in ("tr", "va", "te"))
+
+    def part(k: str) -> Pair:
+        return z["X"][z[k]], z["y"][z[k]]
+
+    return part("tr"), part("va"), part("te")

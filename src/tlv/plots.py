@@ -81,10 +81,12 @@ def backbones_figure(summary: dict, out: Path) -> None:
     for ax, ds in zip(axes[0], datasets, strict=True):
         for r in (r for r in rows if r["dataset"] == ds):
             ap = r["approach"]
-            ax.errorbar(r["steady_epoch_s_mean"], r["test_acc_mean"] * 100,
-                        yerr=[[r["test_acc_mean"] * 100 - r["test_acc_lo"] * 100], [r["test_acc_hi"] * 100 - r["test_acc_mean"] * 100]],
+            acc = r["test_acc_mean"] * 100
+            ax.errorbar(r["steady_epoch_s_mean"], acc,
+                        yerr=[[acc - r["test_acc_lo"] * 100], [r["test_acc_hi"] * 100 - acc]],
                         color=COLORS[ap], marker=MARK[ap], ms=7, capsize=2, linestyle="none")
-            ax.annotate(BB_NAMES[r["backbone"]] if ap != "scratch" else "small CNN", (r["steady_epoch_s_mean"], r["test_acc_mean"] * 100),
+            ax.annotate(BB_NAMES[r["backbone"]] if ap != "scratch" else "small CNN",
+                        (r["steady_epoch_s_mean"], acc),
                         textcoords="offset points", xytext=(5, -9), fontsize=6.5, color="#52514e")
         ax.set_xscale("log")
         ax.set_xlabel("Steady-state epoch time, s (log scale; 720 training images)")
