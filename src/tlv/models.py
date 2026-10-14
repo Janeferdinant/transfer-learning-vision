@@ -43,16 +43,19 @@ def _prep(backbone: str):
 
 def _make_backbone(backbone: str, image_size: int, pretrained: bool) -> keras.Model:
     kw = dict(input_shape=(image_size, image_size, 3), include_top=False,
-              weights="imagenet" if pretrained else None, name="backbone")
+              weights="imagenet" if pretrained else None)
     if backbone == "mobilenetv2":
-        return keras.applications.MobileNetV2(alpha=1.0, **kw)
-    if backbone == "mobilenetv3small":
-        return keras.applications.MobileNetV3Small(include_preprocessing=False, **kw)
-    if backbone == "efficientnetb0":
-        return keras.applications.EfficientNetB0(**kw)
-    if backbone == "resnet50":
-        return keras.applications.ResNet50(**kw)
-    raise ValueError(f"unknown backbone {backbone!r}")
+        model = keras.applications.MobileNetV2(alpha=1.0, **kw)
+    elif backbone == "mobilenetv3small":
+        model = keras.applications.MobileNetV3Small(include_preprocessing=False, **kw)
+    elif backbone == "efficientnetb0":
+        model = keras.applications.EfficientNetB0(**kw)
+    elif backbone == "resnet50":
+        model = keras.applications.ResNet50(**kw)
+    else:
+        raise ValueError(f"unknown backbone {backbone!r}")
+    model.name = "backbone"  # set after construction: Keras derives weight file names from `name`
+    return model
 
 
 def _augment(x):

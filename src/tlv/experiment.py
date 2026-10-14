@@ -13,53 +13,19 @@ import argparse
 import datetime as dt
 import json
 import os
-import random
 import time
 from pathlib import Path
 
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "1")
 
-import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
 
 from . import hardware
 from .data import build_cache, load_splits
-from .models import APPROACHES, BATCH_SIZE, LEARNING_RATES, build_model, count_params
-from .timing import EpochTimer
-
-
-class TimingCallback(keras.callbacks.Callback):
-    """Thin Keras adapter around EpochTimer; lap happens after validation."""
-
-    def __init__(self):
-        super().__init__()
-        self.timer = EpochTimer()
-        self.rows = []
-
-    def on_train_begin(self, logs=None):
-        self.timer.start()
-
-    def on_epoch_end(self, epoch, logs=None):
-        secs = self.timer.lap()
-        self.rows.append(dict(epoch=epoch + 1, seconds=secs,
-                              train_loss=float(logs["loss"]), train_accuracy=float(logs["accuracy"]),
-                              val_loss=float(logs["val_loss"]), val_accuracy=float(logs["val_accuracy"])))
-
-
-def make_ds(X, y, seed=None, shuffle=False):
-    ds = tf.data.Dataset.from_tensor_slices((X.astype("float32"), y))
-    if shuffle:
-        ds = ds.shuffle(len(X), seed=seed, reshuffle_each_iteration=True)
-    return ds.batch(BATCH_SIZE).prefetch(1)
-
-
-def seed_everything(seed: int):
-    random.seed(seed)
-    np.random.seed(seed)
-    keras.utils.set_random_seed(seed)
+from .models import APPROACHES, LEARNING_RATES, build_model, count_params
+from .runner import TimingCallback, make_ds, seed_everything
 
 
 def run_one(approach, seed, epochs, splits, image_size, lr=None):

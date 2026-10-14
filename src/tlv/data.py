@@ -127,11 +127,12 @@ class DatasetSpec:
     classes: list[str]
     licence: str
     md5: str | None = None
+    n_per_class: int = 240  # images kept per class (60/20/20 split of these)
 
 
 DATASETS: dict[str, DatasetSpec] = {
     "flowers": DatasetSpec("flowers", DATA_URL, FLOWERS_SHA256, CLASSES, "CC BY 2.0 (per photo)"),
-    "eurosat": DatasetSpec("eurosat", EUROSAT_URL, EUROSAT_SHA256, EUROSAT_CLASSES, "MIT", EUROSAT_MD5),
+    "eurosat": DatasetSpec("eurosat", EUROSAT_URL, EUROSAT_SHA256, EUROSAT_CLASSES, "MIT", EUROSAT_MD5, 120),
 }
 
 
