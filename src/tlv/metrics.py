@@ -95,3 +95,16 @@ def bootstrap_reduction_ci(baseline, other, n_boot: int = 10000, alpha: float = 
     red = 1.0 - om[ok] / bm[ok]
     lo, hi = np.percentile(red, [100 * alpha / 2, 100 * (1 - alpha / 2)])
     return relative_reduction(b, o), float(lo), float(hi)
+
+
+def bootstrap_diff_ci(a, b, n_boot: int = 10000, alpha: float = 0.05, seed: int = 0):
+    """(estimate, lo, hi) for mean(a) - mean(b), resampling each group independently."""
+    x = np.asarray(a, dtype=float)
+    y = np.asarray(b, dtype=float)
+    if x.size == 0 or y.size == 0:
+        raise ValueError("no values")
+    rng = np.random.default_rng(seed)
+    xm = x[rng.integers(0, x.size, size=(n_boot, x.size))].mean(axis=1)
+    ym = y[rng.integers(0, y.size, size=(n_boot, y.size))].mean(axis=1)
+    lo, hi = np.percentile(xm - ym, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+    return float(x.mean() - y.mean()), float(lo), float(hi)

@@ -103,3 +103,15 @@ def test_bootstrap_reduction_ci_flags_no_difference():
     same = [11.0, 9.0, 14.0, 10.0, 13.0]
     _, lo, hi = bootstrap_reduction_ci(base, same, n_boot=3000, seed=2)
     assert lo < 0 < hi  # interval spans zero: not significant
+
+
+def test_bootstrap_diff_ci_brackets_known_difference():
+    from tlv.metrics import bootstrap_diff_ci
+
+    rng = np.random.default_rng(0)
+    a, b = rng.normal(0.8, 0.01, 10), rng.normal(0.6, 0.01, 10)
+    est, lo, hi = bootstrap_diff_ci(a, b, n_boot=2000)
+    assert lo < est < hi and 0.18 < lo and hi < 0.22
+    assert bootstrap_diff_ci(a, a, n_boot=2000)[1] < 0 < bootstrap_diff_ci(a, a, n_boot=2000)[2]
+    with pytest.raises(ValueError):
+        bootstrap_diff_ci([], b)
