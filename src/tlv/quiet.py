@@ -57,7 +57,7 @@ def system_busy_fraction(window: float = 3.0) -> float:
     return 0.0 if t1 <= t0 else min(1.0, max(0.0, (b1 - b0) / (t1 - t0)))
 
 
-def wait_until_quiet(threshold: float = 0.10, max_wait: float = 1800.0, poll: float = 10.0) -> tuple[float, float]:
+def wait_until_quiet(threshold: float = 0.10, max_wait: float = 120.0, poll: float = 10.0) -> tuple[float, float]:
     """Block until system-wide CPU use is below ``threshold`` (or ``max_wait`` s have passed).
 
     Returns (seconds waited, last observed busy fraction).

@@ -40,6 +40,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--n-per-class", type=int, default=None, help="images per class (default: dataset setting)")
     p.add_argument("--data-dir", default="data")
     p.add_argument("--lr-table", default=str(LR_FILE))
+    p.add_argument("--no-quiet-wait", action="store_true",
+                   help="do not wait for a quiet machine before each run (always set for the accuracy-only pilot)")
     p.add_argument("--out", required=True)
     a = p.parse_args(argv)
 
@@ -76,7 +78,8 @@ def main(argv: list[str] | None = None) -> None:
         t0 = time.perf_counter()
         for attempt in range(1, 6):  # the desktop is shared: retry a run that hits a memory shortage
             try:
-                ep_rows, run_row = run_config(c, cache[c.image_size], len(DATASETS[a.dataset].classes))
+                ep_rows, run_row = run_config(c, cache[c.image_size], len(DATASETS[a.dataset].classes),
+                                              wait_quiet=not (a.no_quiet_wait or a.suite == "pilot"))
                 break
             except (MemoryError, tf.errors.ResourceExhaustedError) as exc:
                 print(f"  memory shortage on attempt {attempt} ({type(exc).__name__}); retrying in 60 s", flush=True)
