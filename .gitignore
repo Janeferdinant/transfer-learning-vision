@@ -10,3 +10,4 @@ docs/runs/raw-stdout.log
 .ruff_cache/
 results/smoke/
 *.log
+queue.log
