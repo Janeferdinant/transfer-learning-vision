@@ -5,3 +5,8 @@ __pycache__/
 .pytest_cache/
 .venv/
 docs/runs/raw-stdout.log
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+results/smoke/
+*.log

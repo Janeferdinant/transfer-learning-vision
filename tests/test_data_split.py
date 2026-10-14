@@ -72,3 +72,33 @@ def test_dedupe_by_hash_removes_identical_images_keeps_first():
     imgs[3] = imgs[2]
     keep = dedupe_by_hash(imgs)
     assert list(keep) == [0, 2]  # 1 duplicates 0, 3 duplicates 2
+
+
+def test_select_per_class_is_balanced_seeded_and_nested():
+    from tlv.data import select_per_class
+
+    y = np.repeat(np.arange(4), 30)
+    a = select_per_class(y, 10, seed=1)
+    assert np.array_equal(a, select_per_class(y, 10, seed=1))
+    assert not np.array_equal(a, select_per_class(y, 10, seed=2))
+    assert np.bincount(y[a]).tolist() == [10, 10, 10, 10]
+    assert set(a) <= set(select_per_class(y, 25, seed=1))  # nested for a fixed seed
+    assert np.array_equal(select_per_class(y, None, seed=1), np.arange(len(y)))
+
+
+def test_select_per_class_rejects_too_many():
+    from tlv.data import select_per_class
+
+    with pytest.raises(ValueError):
+        select_per_class(np.repeat(np.arange(2), 5), 6, seed=0)
+
+
+def test_sha256_verification(tmp_path):
+    from tlv.data import verify_file
+
+    f = tmp_path / "x.bin"
+    f.write_bytes(b"abc")
+    good = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    verify_file(f, sha256=good)
+    with pytest.raises(ValueError):
+        verify_file(f, sha256="0" * 64)

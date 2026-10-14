@@ -1,8 +1,8 @@
 """Time-to-target metric and bootstrap statistics (no TensorFlow dependency)."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 import numpy as np
 
@@ -17,8 +17,8 @@ class TimeToTarget:
     """
 
     reached: bool
-    seconds: Optional[float]
-    epochs: Optional[int]
+    seconds: float | None
+    epochs: int | None
 
 
 def time_to_target(times: Sequence[float], accs: Sequence[float], target: float) -> TimeToTarget:

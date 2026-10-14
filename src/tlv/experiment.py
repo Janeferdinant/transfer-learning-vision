@@ -78,7 +78,7 @@ def run_one(approach, seed, epochs, splits, image_size, lr=None):
                    final_val_accuracy=cb.rows[-1]["val_accuracy"],
                    best_val_accuracy=max(r["val_accuracy"] for r in cb.rows),
                    test_accuracy=float(test_acc), trainable_params=trainable, total_params=total,
-                   finished_utc=dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+                   finished_utc=dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
     return epoch_rows, run_row
 
 
