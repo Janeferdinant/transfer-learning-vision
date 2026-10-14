@@ -27,7 +27,15 @@ def load_lr_table(path: Path = LR_FILE) -> dict[str, float]:
 
 
 def _append(path: Path, rows: list[dict]) -> None:
-    pd.DataFrame(rows).to_csv(path, mode="a", header=not path.exists(), index=False)
+    """Append rows; if the new rows carry columns the file does not have yet, rewrite it with the union."""
+    new = pd.DataFrame(rows)
+    if path.exists():
+        old = pd.read_csv(path)
+        if set(new.columns) - set(old.columns):
+            pd.concat([old, new], ignore_index=True).to_csv(path, index=False)
+            return
+        new = new.reindex(columns=old.columns)
+    new.to_csv(path, mode="a", header=not path.exists(), index=False)
 
 
 def main(argv: list[str] | None = None) -> None:

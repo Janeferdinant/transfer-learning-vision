@@ -28,6 +28,7 @@ from .metrics import (
 )
 
 PRIMARY_FRACTION = 0.95  # primary target = 95% of the from-scratch final validation accuracy
+DISTURBED = 0.15  # a run is flagged when other programs used more than 15% of all CPU time during its fit
 FIXED_TARGETS = (0.5,)  # extra fixed target used for the data-efficiency curves
 CONFIG_COLS = ["dataset", "backbone", "approach", "unfreeze_blocks", "train_per_class", "learning_rate", "image_size"]
 
@@ -91,6 +92,9 @@ def summarise(runs: pd.DataFrame, curves: Curves, by: Sequence[str], targets: di
             v = g[col].to_numpy(dtype=float)
             lo, hi = _ci(v)
             row.update({f"{name}_mean": float(v.mean()), f"{name}_lo": lo, f"{name}_hi": hi})
+        if "bg_cpu_fraction" in g:
+            row["bg_cpu_mean"] = float(g.bg_cpu_fraction.mean())  # CPU share used by other programs during the fits
+            row["n_disturbed"] = int((g.bg_cpu_fraction > DISTURBED).sum())
         row["trainable_params"] = int(g.trainable_params.iloc[0])
         row["total_params"] = int(g.total_params.iloc[0])
         row["epochs_run"] = int(g.epochs_run.iloc[0])

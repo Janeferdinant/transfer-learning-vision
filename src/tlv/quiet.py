@@ -57,16 +57,25 @@ def system_busy_fraction(window: float = 3.0) -> float:
     return 0.0 if t1 <= t0 else min(1.0, max(0.0, (b1 - b0) / (t1 - t0)))
 
 
+_STATE = {"timeouts": 0}
+GIVE_UP_AFTER = 2  # after this many consecutive timeouts the machine is treated as persistently busy
+
+
 def wait_until_quiet(threshold: float = 0.10, max_wait: float = 120.0, poll: float = 10.0) -> tuple[float, float]:
     """Block until system-wide CPU use is below ``threshold`` (or ``max_wait`` s have passed).
 
-    Returns (seconds waited, last observed busy fraction).
+    If the machine stays busy for ``GIVE_UP_AFTER`` consecutive waits, later calls only take one
+    quick reading (waiting would just idle); a quiet reading resets that. Disturbed runs are
+    identified afterwards through ``bg_cpu_fraction``. Returns (seconds waited, last busy fraction).
     """
     start = time.monotonic()
     busy = system_busy_fraction()
+    if busy > threshold and _STATE["timeouts"] >= GIVE_UP_AFTER:
+        return time.monotonic() - start, busy
     while busy > threshold and time.monotonic() - start < max_wait:
         time.sleep(poll)
         busy = system_busy_fraction()
+    _STATE["timeouts"] = _STATE["timeouts"] + 1 if busy > threshold else 0
     return time.monotonic() - start, busy
 
 
