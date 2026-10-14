@@ -102,6 +102,41 @@ def secondary_target(epochs: pd.DataFrame, fraction: float = 0.90) -> float:
     return fraction * float(best)
 
 
+def _ci(v, scale=1.0, nd=1):
+    return f"{v[0] * scale:.{nd}f} to {v[1] * scale:.{nd}f}"
+
+
+def to_markdown(summary: dict) -> str:
+    """Markdown tables for the README and the run log."""
+    names = {"scratch": "From scratch", "frozen": "Feature extraction (frozen)", "finetune": "Fine-tuning"}
+    out = []
+    for key, rows in summary["time_to_target"].items():
+        out.append(f"### Target `{key}` = {summary['targets'][key] * 100:.1f}% validation accuracy\n")
+        out.append("| Approach | Runs reaching target | Mean time-to-target, s (95% CI) | Mean epochs (95% CI) "
+                   "| Time reduction vs scratch (95% CI) | Epoch reduction vs scratch (95% CI) |")
+        out.append("|---|---|---|---|---|---|")
+        for r in rows:
+            ge = ">= " if r["censored"] else ""
+            if r["approach"] == BASELINE:
+                red_s = red_e = "baseline"
+            else:
+                red_s = f"{r['reduction_seconds'] * 100:.0f}% ({_ci(r['reduction_seconds_ci'], 100, 0)}%)"
+                red_e = f"{r['reduction_epochs'] * 100:.0f}% ({_ci(r['reduction_epochs_ci'], 100, 0)}%)"
+            out.append(f"| {names.get(r['approach'], r['approach'])} | {r['n_reached']} of {r['n_runs']} "
+                       f"| {ge}{r['mean_seconds']:.1f} ({_ci(r['seconds_ci'])}) "
+                       f"| {ge}{r['mean_epochs']:.1f} ({_ci(r['epochs_ci'])}) | {red_s} | {red_e} |")
+        out.append("")
+    out.append("### Final accuracy at the fixed epoch budget\n")
+    out.append("| Approach | Runs | Final val accuracy, % (95% CI) | Test accuracy, % (95% CI) | Total training time, s (95% CI) |")
+    out.append("|---|---|---|---|---|")
+    for r in summary["final_accuracy"]:
+        out.append(f"| {names.get(r['approach'], r['approach'])} | {r['n_runs']} "
+                   f"| {r['final_val_accuracy_mean'] * 100:.1f} ({_ci(r['final_val_accuracy_ci'], 100)}) "
+                   f"| {r['test_accuracy_mean'] * 100:.1f} ({_ci(r['test_accuracy_ci'], 100)}) "
+                   f"| {r['total_seconds_mean']:.1f} ({_ci(r['total_seconds_ci'])}) |")
+    return "\n".join(out) + "\n"
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--epochs-csv", default="results/per_epoch.csv")
@@ -124,6 +159,7 @@ def main(argv=None):
         "n_boot": a.n_boot,
     }
     Path(a.out).write_text(json.dumps(out, indent=2))
+    Path(a.out).with_suffix(".md").write_text(to_markdown(out))
     print(f"wrote {a.out}")
 
 
