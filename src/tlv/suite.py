@@ -74,7 +74,15 @@ def main(argv: list[str] | None = None) -> None:
             cache[c.image_size] = load_splits(build_cache(Path(a.data_dir), c.image_size, npc,
                                                           dataset=a.dataset))
         t0 = time.perf_counter()
-        ep_rows, run_row = run_config(c, cache[c.image_size], len(DATASETS[a.dataset].classes))
+        for attempt in range(1, 6):  # the desktop is shared: retry a run that hits a memory shortage
+            try:
+                ep_rows, run_row = run_config(c, cache[c.image_size], len(DATASETS[a.dataset].classes))
+                break
+            except (MemoryError, tf.errors.ResourceExhaustedError) as exc:
+                print(f"  memory shortage on attempt {attempt} ({type(exc).__name__}); retrying in 60 s", flush=True)
+                if attempt == 5:
+                    raise
+                time.sleep(60)
         _append(epochs_csv, ep_rows)
         _append(runs_csv, [run_row])
         print(f"[{i}/{len(todo)}] {c.run_id()} train={run_row['total_seconds']:.1f}s "

@@ -1,8 +1,18 @@
 #!/usr/bin/env bash
-# Sequential experiment queue used for the 2026-10 additions (see docs/runs/). Resumable.
+# Sequential experiment queue used for the 2026-10 additions (see docs/runs/). Resumable: a suite
+# that is interrupted (for example by a memory shortage on a shared desktop) is retried and
+# continues from the runs already in its per_run.csv.
 set -u
+set -o pipefail
 PY="${PY:-python}"
-run() { echo "=== $(date -u +%FT%TZ) $*"; "$PY" -m tlv.suite "$@" 2>&1 | grep -v -E "^I0000|^W0000|UserWarning|get_data_adapter|oneDNN"; }
+run() {
+  for attempt in 1 2 3 4; do
+    echo "=== $(date -u +%FT%TZ) attempt $attempt: $*"
+    "$PY" -m tlv.suite "$@" 2>&1 | grep --line-buffered -v -E "^I0000|^W0000|UserWarning|get_data_adapter|oneDNN|retracing|return MobileNetV3"
+    if [ "${PIPESTATUS[0]}" -eq 0 ]; then return 0; fi
+    sleep 30
+  done
+}
 run --suite pilot --dataset flowers --seeds 100 --out results/pilot_flowers
 run --suite pilot --dataset eurosat --seeds 100 --out results/pilot_eurosat
 run --suite backbones --dataset flowers --seeds 0 1 2 3 4 --out results/backbones_flowers

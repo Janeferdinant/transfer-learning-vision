@@ -22,6 +22,7 @@ import tensorflow as tf  # noqa: E402
 from .config import BATCH_SIZE, RunConfig, steps_per_epoch  # noqa: E402
 from .data import Splits, select_per_class  # noqa: E402
 from .models import build_model, count_params  # noqa: E402
+from .quiet import BackgroundMeter, wait_until_quiet  # noqa: E402
 from .timing import EpochTimer  # noqa: E402
 
 
@@ -56,7 +57,7 @@ def seed_everything(seed: int) -> None:
     keras.utils.set_random_seed(seed)
 
 
-def run_config(cfg: RunConfig, splits: Splits, n_classes: int) -> tuple[list[dict], dict]:
+def run_config(cfg: RunConfig, splits: Splits, n_classes: int, wait_quiet: bool = True) -> tuple[list[dict], dict]:
     """Train ``cfg`` on its (sub)sampled training set; returns (epoch rows, run row)."""
     (Xtr, ytr), (Xva, yva), (Xte, yte) = splits
     c = cfg.normalised()
@@ -69,8 +70,10 @@ def run_config(cfg: RunConfig, splits: Splits, n_classes: int) -> tuple[list[dic
                         unfreeze_blocks=c.unfreeze_blocks if c.approach == "finetune" else 4)
     trainable, total = count_params(model)
     cb = TimingCallback()
-    model.fit(make_ds(Xtr, ytr, c.seed, shuffle=True), validation_data=make_ds(Xva, yva),
-              epochs=epochs, callbacks=[cb], verbose=0)
+    train_ds, val_ds = make_ds(Xtr, ytr, c.seed, shuffle=True), make_ds(Xva, yva)
+    waited, busy = wait_until_quiet() if wait_quiet else (0.0, float("nan"))
+    with BackgroundMeter() as meter:
+        model.fit(train_ds, validation_data=val_ds, epochs=epochs, callbacks=[cb], verbose=0)
     _, test_acc = model.evaluate(make_ds(Xte, yte), verbose=0)  # outside the timer
     rid = c.run_id()
     epoch_rows = [dict(run_id=rid, **r) for r in cb.rows]
@@ -83,6 +86,7 @@ def run_config(cfg: RunConfig, splits: Splits, n_classes: int) -> tuple[list[dic
                    final_val_accuracy=cb.rows[-1]["val_accuracy"],
                    best_val_accuracy=max(r["val_accuracy"] for r in cb.rows),
                    test_accuracy=float(test_acc), trainable_params=trainable, total_params=total,
+                   bg_cpu_fraction=meter.fraction, waited_quiet_s=waited, busy_before_fit=busy,
                    finished_utc=dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
     keras.backend.clear_session()
     return epoch_rows, run_row
