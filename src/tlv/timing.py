@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 
 class EpochTimer:
@@ -15,10 +15,10 @@ class EpochTimer:
 
     def __init__(self, clock: Callable[[], float] = time.perf_counter):
         self.clock = clock
-        self.laps: List[float] = []
+        self.laps: list[float] = []
         self._started = False
         self._accum = 0.0
-        self._t0: Optional[float] = None
+        self._t0: float | None = None
 
     def start(self) -> None:
         self.laps = []

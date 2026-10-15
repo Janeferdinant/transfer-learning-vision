@@ -1,0 +1,17 @@
+{
+  "eurosat|-|scratch": 0.0001,
+  "eurosat|efficientnetb0|finetune": 0.0001,
+  "eurosat|efficientnetb0|frozen": 0.001,
+  "eurosat|mobilenetv2|finetune": 0.0003,
+  "eurosat|mobilenetv2|frozen": 0.001,
+  "eurosat|mobilenetv3small|finetune": 0.0001,
+  "eurosat|mobilenetv3small|frozen": 0.001,
+  "eurosat|resnet50|finetune": 0.0001,
+  "eurosat|resnet50|frozen": 0.001,
+  "flowers|efficientnetb0|finetune": 0.0003,
+  "flowers|efficientnetb0|frozen": 0.001,
+  "flowers|mobilenetv3small|finetune": 0.0003,
+  "flowers|mobilenetv3small|frozen": 0.001,
+  "flowers|resnet50|finetune": 0.0003,
+  "flowers|resnet50|frozen": 0.001
+}

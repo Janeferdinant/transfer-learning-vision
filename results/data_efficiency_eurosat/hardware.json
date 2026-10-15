@@ -1,0 +1,9 @@
+{
+  "cpu": "AMD Ryzen 7 5800X 8-Core Processor",
+  "logical_cores": 16,
+  "ram_gb": 31.9,
+  "os": "Windows 10",
+  "python": "3.11.9",
+  "tensorflow": "2.21.0",
+  "accelerator": "none (CPU only, no CUDA)"
+}

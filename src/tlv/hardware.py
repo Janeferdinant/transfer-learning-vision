@@ -10,9 +10,9 @@ def _cpu_name() -> str:
     try:
         import winreg
 
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,  # type: ignore[attr-defined,unused-ignore]
                             r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as k:
-            return winreg.QueryValueEx(k, "ProcessorNameString")[0].strip()
+            return winreg.QueryValueEx(k, "ProcessorNameString")[0].strip()  # type: ignore[attr-defined,unused-ignore]
     except Exception:
         return platform.processor() or "unknown CPU"
 
@@ -28,7 +28,7 @@ def _ram_gb() -> float:
 
         m = MEM()
         m.l = ctypes.sizeof(MEM)
-        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))
+        ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))  # type: ignore[attr-defined,unused-ignore]
         return round(m.total / 2**30, 1)
     except Exception:
         return float("nan")

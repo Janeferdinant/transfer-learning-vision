@@ -1,0 +1,56 @@
+{
+ "scratch": {
+  "feature_map_grid": 6,
+  "n_correct": 157,
+  "n_images": 240,
+  "test_accuracy": 0.6541666666666667,
+  "gradcam_drop_mean": 0.1950238198041916,
+  "gradcam_drop_ci": [
+   0.16314084612450022,
+   0.228705672525866
+  ],
+  "random_drop_mean": 0.08177616447210312,
+  "random_drop_ci": [
+   0.05521768817476406,
+   0.10973958379239032
+  ],
+  "gradcam_minus_random": 0.11324766202337425,
+  "gradcam_minus_random_ci": [
+   0.07047789219031289,
+   0.1560148488113265
+  ]
+ },
+ "fine-tuned": {
+  "feature_map_grid": 3,
+  "n_correct": 199,
+  "n_images": 240,
+  "test_accuracy": 0.8291666666666667,
+  "gradcam_drop_mean": 0.2374400943517685,
+  "gradcam_drop_ci": [
+   0.18626465621830232,
+   0.2893469305793244
+  ],
+  "random_drop_mean": 0.08308665454387665,
+  "random_drop_ci": [
+   0.05258583047956079,
+   0.11732119974029724
+  ],
+  "gradcam_minus_random": 0.1543534231844859,
+  "gradcam_minus_random_ci": [
+   0.09423198151828056,
+   0.21507902060771106
+  ]
+ },
+ "examples": {
+  "test_indices": [
+   40,
+   78,
+   120,
+   156,
+   206
+  ],
+  "seed": 0,
+  "mask_fraction": 0.2,
+  "epochs": 30
+ }
+}
