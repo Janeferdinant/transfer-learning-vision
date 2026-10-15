@@ -66,6 +66,7 @@ def data_efficiency_figure(summary: dict, out: Path) -> None:
             ticks = sorted({r["n_train"] / (10 if ds == "eurosat" else 5) for r in rows if r["dataset"] == ds})
             ax.set_xticks(ticks)
             ax.set_xticklabels([f"{t:g}" for t in ticks])
+            ax.minorticks_off()
             _style(ax)
         a0.legend(frameon=False, fontsize=8, loc="lower right")
     fig.tight_layout()
@@ -89,12 +90,15 @@ def backbones_figure(summary: dict, out: Path) -> None:
                         (r["steady_epoch_s_mean"], acc),
                         textcoords="offset points", xytext=(5, -9), fontsize=6.5, color="#52514e")
         ax.set_xscale("log")
+        ax.minorticks_off()
+        ax.set_xticks([1, 2, 3, 4, 6])
+        ax.set_xticklabels(["1", "2", "3", "4", "6"])
         ax.set_xlabel("Steady-state epoch time, s (log scale; 720 training images)")
         ax.set_ylabel("Test accuracy (%)")
         ax.set_title(DS_NAMES[ds], fontsize=10)
         _style(ax)
     handles = [plt.Line2D([], [], color=COLORS[a], marker=MARK[a], linestyle="none", label=NAMES[a]) for a in COLORS]
-    axes[0][0].legend(handles=handles, frameon=False, fontsize=8, loc="lower right")
+    axes[0][0].legend(handles=handles, frameon=False, fontsize=8, loc="lower left")
     fig.tight_layout()
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out)
@@ -109,10 +113,14 @@ def ablation_figure(summary: dict, out: Path) -> None:
     datasets = sorted({r["dataset"] for s in spec for r in abl[s[0]]})
     fig, axes = plt.subplots(len(datasets), len(spec), figsize=(4.4 * len(spec), 3.4 * len(datasets)),
                              squeeze=False, dpi=110)
+    legend_done = False
     for i, ds in enumerate(datasets):
         for j, (name, factor, label) in enumerate(spec):
             ax = axes[i][j]
             rs = [r for r in abl[name] if r["dataset"] == ds]
+            if not rs:
+                ax.set_visible(False)  # this ablation was run on the other dataset only
+                continue
             for ap in ("scratch", "frozen", "finetune"):
                 pts = sorted(((r[factor] if r[factor] != -1 else 99, r) for r in rs if r["approach"] == ap), key=lambda t: t[0])
                 if not pts:
@@ -131,8 +139,9 @@ def ablation_figure(summary: dict, out: Path) -> None:
             ax.set_ylabel("Test accuracy (%)", fontsize=8)
             ax.set_title(f"{DS_NAMES.get(ds, ds)}", fontsize=9)
             _style(ax)
-            if i == 0 and j == 0:
+            if len({r["approach"] for r in rs}) == 3 and not legend_done:
                 ax.legend(frameon=False, fontsize=7)
+                legend_done = True
     fig.tight_layout()
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out)

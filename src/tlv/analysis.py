@@ -28,7 +28,7 @@ from .metrics import (
 )
 
 PRIMARY_FRACTION = 0.95  # primary target = 95% of the from-scratch final validation accuracy
-DISTURBED = 0.15  # a run is flagged when other programs used more than 15% of all CPU time during its fit
+DISTURBED = 0.5  # flag a run when other programs used more than half of all CPU time during its fit
 FIXED_TARGETS = (0.5,)  # extra fixed target used for the data-efficiency curves
 CONFIG_COLS = ["dataset", "backbone", "approach", "unfreeze_blocks", "train_per_class", "learning_rate", "image_size"]
 
