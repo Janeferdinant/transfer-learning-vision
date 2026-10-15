@@ -35,10 +35,15 @@ CONFIG_COLS = ["dataset", "backbone", "approach", "unfreeze_blocks", "train_per_
 Curves = dict[str, tuple[np.ndarray, np.ndarray]]
 
 
-def load_suite(path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_suite(path: Path, max_bg: float | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Runs and per-epoch logs of a suite; ``max_bg`` drops runs disturbed by other programs."""
     runs = pd.read_csv(path / "per_run.csv")
     runs["train_per_class"] = runs["train_per_class"].fillna(-1).astype(int)  # -1 = all images
-    return runs, pd.read_csv(path / "per_epoch.csv")
+    epochs = pd.read_csv(path / "per_epoch.csv")
+    if max_bg is not None:
+        runs = runs[runs.bg_cpu_fraction <= max_bg]
+        epochs = epochs[epochs.run_id.isin(runs.run_id)]
+    return runs, epochs
 
 
 def curves_by_run(epochs: pd.DataFrame) -> Curves:
@@ -236,6 +241,9 @@ def _write(path: Path, obj: Any, md: str) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--results", default="results")
+    ap.add_argument("--max-bg", type=float, default=None,
+                    help="sensitivity analysis: drop runs whose background CPU share exceeded this value")
+    ap.add_argument("--suffix", default="", help="appended to the summary file names, e.g. _lowbg")
     a = ap.parse_args(argv)
     res = Path(a.results)
     targets_by_ds: dict[str, float] = {}
@@ -248,7 +256,7 @@ def main(argv: list[str] | None = None) -> None:
         d = res / f"backbones_{ds}"
         if not (d / "per_run.csv").exists():
             continue
-        runs, epochs = load_suite(d)
+        runs, epochs = load_suite(d, a.max_bg)
         c = curves_by_run(epochs)
         curves.update(c)
         targets_by_ds[ds] = primary_target(runs)
@@ -257,7 +265,7 @@ def main(argv: list[str] | None = None) -> None:
         bb_rows += rows
         md_bb.append(backbones_markdown(rows, ds, targets_by_ds[ds]))
     if bb_rows:
-        _write(res / "summary_backbones", dict(targets=targets_by_ds, rows=bb_rows), "\n".join(md_bb))
+        _write(res / f"summary_backbones{a.suffix}", dict(targets=targets_by_ds, rows=bb_rows), "\n".join(md_bb))
         summaries["backbones"] = len(bb_rows)
 
     de_rows: list[dict] = []
@@ -266,7 +274,7 @@ def main(argv: list[str] | None = None) -> None:
         d = res / f"data_efficiency_{ds}"
         if not (d / "per_run.csv").exists() or ds not in targets_by_ds:
             continue
-        runs, epochs = load_suite(d)
+        runs, epochs = load_suite(d, a.max_bg)
         c = curves_by_run(epochs)
         curves.update(c)
         tg = {"primary": targets_by_ds[ds], "fixed_0.50": 0.5}
@@ -274,7 +282,7 @@ def main(argv: list[str] | None = None) -> None:
         de_rows += rows
         md_de.append(data_efficiency_markdown(rows, ds, tg))
     if de_rows:
-        _write(res / "summary_data_efficiency", dict(targets=targets_by_ds, rows=de_rows), "\n".join(md_de))
+        _write(res / f"summary_data_efficiency{a.suffix}", dict(targets=targets_by_ds, rows=de_rows), "\n".join(md_de))
         summaries["data_efficiency"] = len(de_rows)
 
     abl = {"depth": ("unfreeze_blocks", "Blocks fine-tuned"), "lr": ("learning_rate", "Learning rate"),
@@ -287,7 +295,7 @@ def main(argv: list[str] | None = None) -> None:
             d = res / f"ablation_{name}_{ds}"
             if not (d / "per_run.csv").exists() or ds not in targets_by_ds:
                 continue
-            runs, epochs = load_suite(d)
+            runs, epochs = load_suite(d, a.max_bg)
             c = curves_by_run(epochs)
             curves.update(c)
             rows_all += summarise(runs, c, ["dataset", "approach", factor], {"primary": targets_by_ds[ds]})
@@ -296,7 +304,7 @@ def main(argv: list[str] | None = None) -> None:
             tg_txt = ", ".join(f"{k} {v * 100:.1f}%" for k, v in targets_by_ds.items())
             md_ab.append(f"#### {label}\n\nPrimary targets used: {tg_txt}.\n\n" + ablation_markdown(rows_all, factor, label))
     if ab_rows:
-        _write(res / "summary_ablations", dict(targets=targets_by_ds, rows=ab_rows), "\n".join(md_ab))
+        _write(res / f"summary_ablations{a.suffix}", dict(targets=targets_by_ds, rows=ab_rows), "\n".join(md_ab))
         summaries["ablations"] = {k: len(v) for k, v in ab_rows.items()}
     print("wrote summaries:", json.dumps(summaries))
 
