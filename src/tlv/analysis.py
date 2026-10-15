@@ -195,6 +195,19 @@ def backbones_markdown(rows: list[dict], dataset: str, target: float) -> str:
     return f"#### {dataset} (primary target {target * 100:.1f}% validation accuracy)\n\n" + _md_table(head, body)
 
 
+def extra_target_markdown(rows: list[dict], dataset: str, tname: str, target: float) -> str:
+    """Compact table for an additional fixed target (shows how the saving depends on the target)."""
+    rs = [r for r in rows if r["dataset"] == dataset]
+    order = {"scratch": 0, "frozen": 1, "finetune": 2}
+    bb_order = ["-", "mobilenetv2", "mobilenetv3small", "efficientnetb0", "resnet50"]
+    rs.sort(key=lambda r: (bb_order.index(r["backbone"]), order[r["approach"]]))
+    body = [[BB_NAMES[r["backbone"]], NAMES[r["approach"]], reach_str(r, tname), sec_str(r, tname),
+             f"{r[tname + '_ep']:.1f}", red_str(r, tname), red_str(r, tname, "red_ep")] for r in rs]
+    head = ["Backbone", "Approach", "Reached", f"Time to {target * 100:.1f}% val, s (95% CI)", "Epochs",
+            "Time reduction vs scratch", "Epoch reduction vs scratch"]
+    return f"#### {dataset}, fixed target {target * 100:.0f}% validation accuracy\n\n" + _md_table(head, body)
+
+
 def data_efficiency_markdown(rows: list[dict], dataset: str, targets: dict[str, float]) -> str:
     rs = [r for r in rows if r["dataset"] == dataset]
     order = {"scratch": 0, "frozen": 1, "finetune": 2}
@@ -260,10 +273,11 @@ def main(argv: list[str] | None = None) -> None:
         c = curves_by_run(epochs)
         curves.update(c)
         targets_by_ds[ds] = primary_target(runs)
-        rows = summarise(runs, c, ["dataset", "backbone", "approach"], {"primary": targets_by_ds[ds]},
-                         baseline_on=["dataset"])
+        tg = {"primary": targets_by_ds[ds], "fixed_0.60": 0.6, "fixed_0.80": 0.8}
+        rows = summarise(runs, c, ["dataset", "backbone", "approach"], tg, baseline_on=["dataset"])
         bb_rows += rows
         md_bb.append(backbones_markdown(rows, ds, targets_by_ds[ds]))
+        md_bb += [extra_target_markdown(rows, ds, t, tg[t]) for t in ("fixed_0.60", "fixed_0.80")]
     if bb_rows:
         _write(res / f"summary_backbones{a.suffix}", dict(targets=targets_by_ds, rows=bb_rows), "\n".join(md_bb))
         summaries["backbones"] = len(bb_rows)

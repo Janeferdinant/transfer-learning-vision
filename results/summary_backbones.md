@@ -14,6 +14,34 @@
 | ResNet50 | Frozen | 10,245 | 23,597,957 | 83.7 (82.7 to 84.6) | 5/5 | 14.0 (11.5 to 17.4) | 1.0 | 58% (36 to 72%) | 14.0 | 4.17 |
 | ResNet50 | Fine-tune | 16,079,365 | 23,597,957 | 85.3 (84.7 to 85.9) | 5/5 | 17.8 (16.3 to 20.0) | 1.0 | 47% (21 to 62%) | 17.8 | 6.79 |
 
+#### flowers, fixed target 60% validation accuracy
+
+| Backbone | Approach | Reached | Time to 60.0% val, s (95% CI) | Epochs | Time reduction vs scratch | Epoch reduction vs scratch |
+|---|---|---|---|---|---|---|
+| small CNN | From scratch | 5/5 | 13.4 (8.7 to 20.7) | 2.6 | baseline | baseline |
+| MobileNetV2 | Frozen | 5/5 | 9.1 (6.8 to 13.0) | 1.2 | 32% (-24 to 61%) | 54% (30 to 69%) |
+| MobileNetV2 | Fine-tune | 5/5 | 10.6 (8.4 to 14.5) | 1.0 | 21% (-41 to 53%) | 62% (50 to 71%) |
+| MobileNetV3Small | Frozen | 5/5 | 8.7 (8.1 to 9.4) | 3.0 | 35% (-2 to 58%) | -15% (-50 to 12%) |
+| MobileNetV3Small | Fine-tune | 5/5 | 10.5 (9.7 to 11.6) | 1.4 | 21% (-23 to 49%) | 46% (20 to 64%) |
+| EfficientNetB0 | Frozen | 5/5 | 14.9 (13.2 to 17.0) | 1.0 | -11% (-76 to 29%) | 62% (50 to 71%) |
+| EfficientNetB0 | Fine-tune | 5/5 | 18.3 (15.9 to 20.8) | 1.0 | -37% (-117 to 13%) | 62% (50 to 71%) |
+| ResNet50 | Frozen | 5/5 | 14.0 (11.5 to 17.4) | 1.0 | -4% (-73 to 35%) | 62% (50 to 71%) |
+| ResNet50 | Fine-tune | 5/5 | 17.8 (16.3 to 20.0) | 1.0 | -33% (-109 to 15%) | 62% (50 to 71%) |
+
+#### flowers, fixed target 80% validation accuracy
+
+| Backbone | Approach | Reached | Time to 80.0% val, s (95% CI) | Epochs | Time reduction vs scratch | Epoch reduction vs scratch |
+|---|---|---|---|---|---|---|
+| small CNN | From scratch | 0/5 | >= 108.0 (91.7 to 135.0) | 30.0 | baseline | baseline |
+| MobileNetV2 | Frozen | 5/5 | 21.2 (14.0 to 28.7) | 8.8 | >= 80% (72 to 87%) | >= 71% (52 to 81%) |
+| MobileNetV2 | Fine-tune | 5/5 | 16.1 (12.6 to 21.0) | 4.0 | >= 85% (79 to 89%) | >= 87% (84 to 89%) |
+| MobileNetV3Small | Frozen | 4/5 | >= 28.3 (24.1 to 32.4) | 25.8 | 74% (67 to 80%) (both censored) | 14% (3 to 26%) (both censored) |
+| MobileNetV3Small | Fine-tune | 5/5 | 14.8 (13.4 to 16.4) | 5.0 | >= 86% (83 to 89%) | >= 83% (81 to 87%) |
+| EfficientNetB0 | Frozen | 5/5 | 21.0 (19.3 to 22.3) | 3.8 | >= 81% (76 to 85%) | >= 87% (85 to 90%) |
+| EfficientNetB0 | Fine-tune | 5/5 | 19.5 (16.8 to 22.8) | 1.4 | >= 82% (77 to 86%) | >= 95% (94 to 97%) |
+| ResNet50 | Frozen | 5/5 | 29.6 (23.6 to 35.6) | 4.6 | >= 73% (64 to 80%) | >= 85% (80 to 89%) |
+| ResNet50 | Fine-tune | 5/5 | 21.5 (19.0 to 23.2) | 1.6 | >= 80% (76 to 84%) | >= 95% (93 to 96%) |
+
 #### eurosat (primary target 70.3% validation accuracy)
 
 | Backbone | Approach | Trainable params | Total params | Test acc, % (95% CI) | Reached | Time to 70.3% val, s (95% CI) | Epochs | Time reduction vs scratch | Epoch 1, s | Steady epoch, s |
@@ -27,3 +55,31 @@
 | EfficientNetB0 | Fine-tune | 2,883,274 | 4,062,381 | 89.1 (88.2 to 90.3) | 5/5 | 18.8 (18.1 to 19.4) | 1.8 | 46% (35 to 56%) | 16.7 | 2.74 |
 | ResNet50 | Frozen | 20,490 | 23,608,202 | 89.6 (89.1 to 90.3) | 5/5 | 11.9 (11.7 to 12.2) | 1.0 | 66% (59 to 72%) | 11.9 | 3.88 |
 | ResNet50 | Fine-tune | 16,089,610 | 23,608,202 | 90.6 (89.7 to 91.4) | 5/5 | 16.5 (16.1 to 17.0) | 1.0 | 53% (43 to 61%) | 16.5 | 6.17 |
+
+#### eurosat, fixed target 60% validation accuracy
+
+| Backbone | Approach | Reached | Time to 60.0% val, s (95% CI) | Epochs | Time reduction vs scratch | Epoch reduction vs scratch |
+|---|---|---|---|---|---|---|
+| small CNN | From scratch | 5/5 | 13.5 (12.2 to 14.6) | 3.6 | baseline | baseline |
+| MobileNetV2 | Frozen | 5/5 | 6.9 (6.9 to 7.0) | 1.0 | 48% (43 to 53%) | 72% (69 to 75%) |
+| MobileNetV2 | Fine-tune | 5/5 | 9.7 (9.0 to 10.1) | 1.8 | 28% (19 to 36%) | 50% (38 to 61%) |
+| MobileNetV3Small | Frozen | 5/5 | 7.5 (7.4 to 7.6) | 2.0 | 44% (38 to 49%) | 44% (38 to 50%) |
+| MobileNetV3Small | Fine-tune | 5/5 | 11.6 (11.2 to 12.0) | 2.6 | 14% (4 to 22%) | 28% (12 to 42%) |
+| EfficientNetB0 | Frozen | 5/5 | 13.5 (13.5 to 13.6) | 1.0 | -1% (-11 to 8%) | 72% (69 to 75%) |
+| EfficientNetB0 | Fine-tune | 5/5 | 16.7 (16.4 to 17.0) | 1.0 | -24% (-37 to -13%) | 72% (69 to 75%) |
+| ResNet50 | Frozen | 5/5 | 11.9 (11.7 to 12.2) | 1.0 | 12% (2 to 19%) | 72% (69 to 75%) |
+| ResNet50 | Fine-tune | 5/5 | 16.5 (16.1 to 17.0) | 1.0 | -22% (-36 to -12%) | 72% (69 to 75%) |
+
+#### eurosat, fixed target 80% validation accuracy
+
+| Backbone | Approach | Reached | Time to 80.0% val, s (95% CI) | Epochs | Time reduction vs scratch | Epoch reduction vs scratch |
+|---|---|---|---|---|---|---|
+| small CNN | From scratch | 0/5 | >= 91.8 (87.9 to 97.4) | 30.0 | baseline | baseline |
+| MobileNetV2 | Frozen | 5/5 | 10.3 (9.2 to 11.6) | 3.4 | >= 89% (87 to 90%) | >= 89% (85 to 91%) |
+| MobileNetV2 | Fine-tune | 5/5 | 14.2 (12.7 to 15.5) | 4.6 | >= 85% (83 to 86%) | >= 85% (82 to 88%) |
+| MobileNetV3Small | Frozen | 5/5 | 11.9 (11.2 to 12.6) | 7.4 | >= 87% (86 to 88%) | >= 75% (72 to 78%) |
+| MobileNetV3Small | Fine-tune | 5/5 | 14.6 (14.2 to 15.3) | 5.2 | >= 84% (83 to 85%) | >= 83% (81 to 83%) |
+| EfficientNetB0 | Frozen | 5/5 | 18.6 (17.7 to 19.5) | 3.4 | >= 80% (78 to 81%) | >= 89% (87 to 90%) |
+| EfficientNetB0 | Fine-tune | 5/5 | 19.9 (19.2 to 20.9) | 2.2 | >= 78% (77 to 80%) | >= 93% (91 to 93%) |
+| ResNet50 | Frozen | 5/5 | 15.8 (15.4 to 16.1) | 2.0 | >= 83% (82 to 84%) | >= 93% (93 to 93%) |
+| ResNet50 | Fine-tune | 5/5 | 16.5 (16.1 to 17.0) | 1.0 | >= 82% (81 to 83%) | >= 97% (97 to 97%) |
