@@ -11,3 +11,4 @@ docs/runs/raw-stdout.log
 results/smoke/
 *.log
 queue.log
+results/smoke*/

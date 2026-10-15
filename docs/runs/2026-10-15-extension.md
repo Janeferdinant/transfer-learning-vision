@@ -282,3 +282,11 @@ Primary targets used: flowers 65.2%, eurosat 70.3%.
 | flowers | Fine-tune | 96 | 1,669,765 | 83.9 (82.5 to 85.4) | 82.9 (82.9 to 82.9) | 3/3 | 9.1 (8.7 to 9.4) | 1.0 | 56 |
 | flowers | Fine-tune | 128 | 1,669,765 | 86.0 (84.2 to 87.5) | 86.9 (83.3 to 89.6) | 3/3 | 10.9 (9.8 to 12.3) | 1.7 | 84 |
 
+
+## Verification (fresh clone of this branch, new virtual environment)
+
+- `python -m pip install -r requirements.txt`, then `python -m pytest -q`: 69 passed; `ruff check .`: all checks passed; `mypy`: no issues in 19 source files.
+- CI configuration (`requirements-ci.txt`, no TensorFlow): ruff clean, mypy clean, `61 passed, 1 skipped` (the TensorFlow model tests are skipped).
+- Smoke runs from the README: `python -m tlv.experiment --seeds 0 --epochs 3 --out results/smoke` (split sizes 720/240/240, three runs printed); `python -m tlv.suite --suite backbones --dataset eurosat --seeds 0 --epochs 2 --backbones mobilenetv3small --out results/smoke_eurosat` (three runs); `python -m tlv.gradcam --epochs 2 --out results/smoke_gradcam` (figure and summary written). The two dataset archives were copied into the clone's `data/` folder instead of being downloaded again; their SHA-256 digests were still verified by the code.
+- `python -m tlv.analysis` and `python -m tlv.plots` on the committed CSVs reproduced `results/summary_*.json` and `.md`, and the figures, with no difference from the committed files (`git diff` empty); `python -m tlv.export_viz --date 2026-10-15` reproduced `docs/explorer-data.js` byte for byte.
+- Explorer checked with Playwright at 1280 px and 390 px: no horizontal page overflow at either width (also after switching to EuroSAT and to the time-to-target view), dataset, backbone, slider and metric controls work, zero console errors or warnings. The flowers and MobileNetV2 view still shows the original 10-seed numbers (60% target: frozen 20%, fine-tuned 1%).
