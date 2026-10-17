@@ -1,0 +1,12 @@
+Machine for the idle-machine rerun, recorded 2026-10-17T08:35:44
+AMD Ryzen 7 5800X 8-Core Processor             , 8 cores / 16 threads
+RAM GB: 31.9
+Microsoft Windows 11 Pro 10.0.26200
+Batteries: 0
+Power Scheme GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (High performance)
+Existing Power Schemes (* Active)
+-----------------------------------
+Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)
+Power Scheme GUID: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (High performance) *
+Power Scheme GUID: a1841308-3541-4fab-bc81-f71556f20b4a  (Power saver)
+Python 3.11.9 TensorFlow 2.21.0 Keras 3.15.1 NumPy 2.4.6 pandas 3.0.6 Pillow 12.3.0
