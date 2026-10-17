@@ -1,0 +1,12 @@
+﻿idle-check 2026-10-17 10:26:42: window=60s mean=59.6% max=93.6% top5=[Dashboard (464.9 cpu-s); chrome (22.4 cpu-s); SignalRgb (21.3 cpu-s); Antigravity IDE (12.9 cpu-s); dwm (8.8 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 10:32:42: window=60s mean=32.5% max=60.2% top5=[Dashboard (226.4 cpu-s); SignalRgb (19.1 cpu-s); Antigravity IDE (11.4 cpu-s); SearchIndexer (8.0 cpu-s); explorer (6.4 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 10:38:43: window=60s mean=32.5% max=45.5% top5=[Dashboard (223.3 cpu-s); SignalRgb (18.7 cpu-s); svchost (15.4 cpu-s); Antigravity IDE (10.3 cpu-s); UsbMonitor (4.0 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 10:44:45: window=60s mean=30.7% max=38.6% top5=[Dashboard (223.3 cpu-s); SignalRgb (18.8 cpu-s); Antigravity IDE (11.4 cpu-s); UsbMonitor (4.4 cpu-s); sqlservr (3.8 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 10:50:46: window=60s mean=30.0% max=39.9% top5=[Dashboard (220.9 cpu-s); SignalRgb (19.4 cpu-s); Antigravity IDE (10.7 cpu-s); UsbMonitor (4.3 cpu-s); sqlservr (3.7 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 10:56:46: window=60s mean=29.7% max=37.2% top5=[Dashboard (221.2 cpu-s); SignalRgb (18.3 cpu-s); Antigravity IDE (11.0 cpu-s); UsbMonitor (4.5 cpu-s); SearchIndexer (3.7 cpu-s)]
+GATE: FAIL after 6 checks over 30 min; running anyway, last mean 29.69

@@ -1,0 +1,12 @@
+﻿idle-check 2026-10-17 16:24:14: window=60s mean=37.1% max=62.9% top5=[Dashboard (277.4 cpu-s); SignalRgb (18.5 cpu-s); rustdesk (14.0 cpu-s); UsbMonitor (4.3 cpu-s); sqlservr (3.2 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 16:30:14: window=60s mean=30.3% max=42.3% top5=[Dashboard (219.9 cpu-s); SignalRgb (18.3 cpu-s); rustdesk (12.2 cpu-s); UsbMonitor (3.9 cpu-s); sqlservr (3.8 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 16:36:15: window=60s mean=29.7% max=41.9% top5=[Dashboard (212.8 cpu-s); SignalRgb (19.0 cpu-s); rustdesk (8.3 cpu-s); chrome (4.8 cpu-s); UsbMonitor (4.0 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 16:42:15: window=60s mean=29.6% max=45.5% top5=[Dashboard (215.5 cpu-s); SignalRgb (18.0 cpu-s); rustdesk (6.6 cpu-s); UsbMonitor (4.7 cpu-s); sqlservr (3.7 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 16:48:16: window=60s mean=28.7% max=42.5% top5=[Dashboard (214.8 cpu-s); SignalRgb (17.6 cpu-s); rustdesk (3.8 cpu-s); UsbMonitor (3.7 cpu-s); svchost (2.8 cpu-s)]
+waiting 300 s before re-check
+idle-check 2026-10-17 16:54:17: window=60s mean=28.7% max=41.5% top5=[Dashboard (214.2 cpu-s); SignalRgb (18.2 cpu-s); rustdesk (4.0 cpu-s); UsbMonitor (3.8 cpu-s); sqlservr (3.4 cpu-s)]
+GATE: FAIL after 6 checks over 30 min; running anyway, last mean 28.7
