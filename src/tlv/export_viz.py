@@ -91,6 +91,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--explorer-out", default="docs/explorer-data.js")
     p.add_argument("--results", default="results")
     p.add_argument("--legacy-only", action="store_true", help="only rewrite docs/curves.js")
+    p.add_argument("--var", default="EXPLORER", help="name of the window variable (a rerun uses its own)")
+    p.add_argument("--note", default="", help="one-line description of the run conditions stored in the data")
     a = p.parse_args(argv)
     hw = json.loads(Path(a.hardware).read_text())
     if a.legacy_only:
@@ -99,7 +101,9 @@ def main(argv: list[str] | None = None) -> None:
         print("wrote", a.out)
         return
     ex = build_explorer(Path(a.results), a.date, hw)
-    Path(a.explorer_out).write_text("window.EXPLORER = " + json.dumps(ex, separators=(",", ":")) + ";\n")
+    if a.note:
+        ex["meta"]["note"] = a.note
+    Path(a.explorer_out).write_text(f"window.{a.var} = " + json.dumps(ex, separators=(",", ":")) + ";\n")
     print("wrote", a.explorer_out)
 
 

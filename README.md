@@ -4,15 +4,15 @@
 
 ## Summary
 
-Independent CPU measurements on two public image datasets (TF Flowers, EuroSAT RGB), four ImageNet backbones and training sets of 10 to 144 images per class. All numbers below are from committed runs (`results/`, `docs/runs/`); intervals are 95% percentile bootstraps over seeds.
+Independent CPU measurements on two public image datasets (TF Flowers, EuroSAT RGB), four ImageNet backbones and training sets of 10 to 144 images per class. All numbers below are from committed runs (`results/`, `docs/runs/`); intervals are 95% percentile bootstraps over seeds. **Timing numbers were measured twice**: in an earlier run on a shared machine (2026-10-14/15, labelled "earlier run (shared CPU)") and in a rerun on 2026-10-17 that was meant to be on an idle machine but was not: a program belonging to the machine's owner kept the CPU busy, and the background CPU share during the rerun (median 0.40 to 0.57) was higher than during the earlier run (0.18 to 0.35). Accuracies and epoch counts are identical in both; the time savings are smaller in the rerun. Read the two as a range (see "Timing rerun" below).
 
 | Question | What was measured | Result |
 |---|---|---|
-| Does transfer learning reach a target faster than training from scratch? | Time to 95% of the scratch CNN's final validation accuracy, MobileNetV2, 5 seeds | Yes: 70% (frozen) and 68% (fine-tuned) less time on flowers; 76% and 69% on EuroSAT |
-| Does it generalise across datasets and backbones? | 4 backbones x 2 datasets, same pipeline and seeds | Yes: every backbone reduced the time, by 45% (EfficientNetB0 fine-tuned, flowers) to 76% (MobileNetV2 frozen, EuroSAT) |
+| Does transfer learning reach a target faster than training from scratch? | Time to 95% of the scratch CNN's final validation accuracy, MobileNetV2, 5 seeds | Yes. Earlier run (shared CPU): 70% (frozen) and 68% (fine-tuned) less time on flowers; 76% and 69% on EuroSAT. Rerun 2026-10-17: 64% and 60% on flowers; 71% and 62% on EuroSAT |
+| Does it generalise across datasets and backbones? | 4 backbones x 2 datasets, same pipeline and seeds | Yes: every backbone reduced the time. Earlier run (shared CPU): 45% (EfficientNetB0 fine-tuned, flowers) to 76% (MobileNetV2 frozen, EuroSAT). Rerun 2026-10-17: 22% (same pair, 4 to 40) to 71% (MobileNetV2 frozen, EuroSAT) |
 | Does it help when there is little data? | 10, 25, 50, 100, all images per class | Strongly: on flowers a fine-tuned MobileNetV2 trained on 10 images per class (71.0% test accuracy) beat the scratch CNN trained on all 144 (66.9%); the fine-tuned model's accuracy advantage is +15 to +21 points at every size |
-| When does it not help? | Easy targets, heavy backbones, high learning rates | ResNet50 and EfficientNetB0 fine-tuned need 22% to 24% more seconds than scratch to reach 60% on EuroSAT (72% fewer epochs, but epoch 1 alone costs more than the scratch CNN's whole run to that target); fine-tuning at learning rate 1e-3 collapses to chance |
-| Which choices matter? | Fine-tune depth, learning rate, image size (3 seeds each) | Fine-tuning 1 to 4 blocks is as accurate as 8 or all and needs 2 to 4x less time to the target; learning rate is critical for fine-tuning; larger images help pretrained models (+9.5 points frozen, 64 to 128 px) but not the scratch CNN |
+| When does it not help? | Easy targets, heavy backbones, high learning rates | ResNet50 and EfficientNetB0 fine-tuned need 22% to 24% more seconds than scratch to reach 60% on EuroSAT in the earlier run (38% to 43% in the rerun), despite 72% fewer epochs, because epoch 1 alone costs more than the scratch CNN's whole run to that target; fine-tuning at learning rate 1e-3 collapses to chance |
+| Which choices matter? | Fine-tune depth, learning rate, image size (3 seeds each) | Fine-tuning 1 to 4 blocks is as accurate as 8 or all and needs 2 to 4x less time to the target (earlier run; 2.4x to 3.3x in the rerun); learning rate is critical for fine-tuning; larger images help pretrained models (+9.5 points frozen, 64 to 128 px) but not the scratch CNN |
 | Do the models look at the flower? | Grad-CAM + masking check, scratch vs fine-tuned | Masking the Grad-CAM region hurts the prediction more than masking a random region for both models; the models do not differ significantly in this check |
 
 ![Accuracy and time-to-target against training images per class](docs/figures/data_efficiency.png)
@@ -89,6 +89,8 @@ Both datasets are downloaded at run time into `data/` (git-ignored) and never co
 
 ## Results
 
+**Seconds and time reductions in this section and in sections 1 to 6 are from the earlier run (shared CPU, 2026-10-14/15) unless marked; the rerun of 2026-10-17 is in "Timing rerun" below the history table, and the rerun was not quieter than the earlier run.** Accuracies and epoch counts are identical in both runs.
+
 ### History: the original headline and its re-measurement
 
 The first version (run 2026-10-14, 10 seeds, flowers, MobileNetV2) is kept unchanged; the new code path was run again on seeds 0 to 4 as a consistency check.
@@ -99,6 +101,48 @@ The first version (run 2026-10-14, 10 seeds, flowers, MobileNetV2) is kept uncha
 | 2026-10-14/15, new code (`backbones_flowers`) | 5 | 65.2% | 33.6 s | 10.0 s (70%, 49 to 82) | 10.6 s (68%, 49 to 79) | 66.9 / 79.7 / 82.7% | Verified (this log) |
 
 The two runs agree within their intervals; the larger reductions in the second row come from five seeds, a slightly different target and run-to-run timing noise on a shared machine, not from a changed method. Full original tables (targets 60% to 90%, final accuracy at 30 epochs) are in `results/summary.md` and `docs/runs/2026-10-14-experiment.md`.
+
+### Timing rerun (2026-10-17): earlier run (shared CPU) versus rerun
+
+Verified (rerun 2026-10-17, AMD Ryzen 7 5800X (8 cores, 16 threads), 31.9 GB RAM, Windows 11 Pro; not an idle machine: background CPU share median 0.40 to 0.57). Run log: `docs/runs/2026-10-17-idle-rerun.md`; tables for every suite: `docs/runs/idle-2026-10-17/comparison.md`; new CSVs and summaries: `results/idle_2026-10-17/`; figures: `docs/figures/rerun-2026-10-17/`; the explorer has a "Run" selector.
+
+All 318 timed runs (backbones, data efficiency, depth, learning-rate and image-size ablations) were repeated with the same code, seeds, epochs and learning rates, one run at a time. **The machine was not idle.** A program belonging to the machine's owner (not started by this work and not stopped) used 3 to 12 of the 16 logical CPUs all day; the 60-second pre-run checks gave a mean total CPU use of 28% to 88% (the criterion was 15%), and each batch ran after the 30-minute waiting period. The per-run background CPU share (`bg_cpu_fraction`) had a median of 0.40 to 0.57 per suite, against 0.18 to 0.35 in the earlier run. These numbers are therefore a second measurement under load, not an idle-machine measurement. Test accuracies and epochs to each target are identical to the earlier run; only seconds changed.
+
+Time to the primary target (95% of scratch's final validation accuracy) and reduction versus scratch, 5 seeds:
+
+| Dataset | Backbone | Approach | Earlier run (shared CPU): time to target s, reduction (95% CI) | Rerun 2026-10-17: time to target s, reduction (95% CI) |
+|---|---|---|---|---|
+| TF Flowers | MobileNetV2 | frozen | 10.0 s, 70% (49 to 82) | 10.0 s, 64% (56 to 73) |
+| TF Flowers | MobileNetV2 | fine-tuned | 10.6 s, 68% (49 to 79) | 11.3 s, 60% (50 to 69) |
+| TF Flowers | MobileNetV3Small | frozen | 9.6 s, 71% (57 to 79) | 11.6 s, 59% (49 to 68) |
+| TF Flowers | MobileNetV3Small | fine-tuned | 11.3 s, 67% (50 to 76) | 14.2 s, 49% (38 to 61) |
+| TF Flowers | EfficientNetB0 | frozen | 15.8 s, 53% (29 to 67) | 18.5 s, 34% (18 to 50) |
+| TF Flowers | EfficientNetB0 | fine-tuned | 18.3 s, 45% (18 to 61) | 21.9 s, 22% (4 to 40) |
+| TF Flowers | ResNet50 | frozen | 14.0 s, 58% (36 to 72) | 15.1 s, 46% (34 to 59) |
+| TF Flowers | ResNet50 | fine-tuned | 17.8 s, 47% (21 to 62) | 20.5 s, 27% (10 to 44) |
+| TF Flowers | small CNN | scratch (baseline) | 33.6 s | 28.0 s |
+| EuroSAT | MobileNetV2 | frozen | 8.3 s, 76% (71 to 80) | 10.4 s, 71% (66 to 75) |
+| EuroSAT | MobileNetV2 | fine-tuned | 11.0 s, 69% (62 to 74) | 13.4 s, 62% (55 to 68) |
+| EuroSAT | MobileNetV3Small | frozen | 8.7 s, 75% (70 to 80) | 10.6 s, 70% (65 to 75) |
+| EuroSAT | MobileNetV3Small | fine-tuned | 12.8 s, 64% (56 to 70) | 15.4 s, 57% (49 to 63) |
+| EuroSAT | EfficientNetB0 | frozen | 15.6 s, 56% (46 to 63) | 19.0 s, 47% (37 to 54) |
+| EuroSAT | EfficientNetB0 | fine-tuned | 18.8 s, 46% (35 to 56) | 23.7 s, 34% (20 to 45) |
+| EuroSAT | ResNet50 | frozen | 11.9 s, 66% (59 to 72) | 14.1 s, 60% (53 to 66) |
+| EuroSAT | ResNet50 | fine-tuned | 16.5 s, 53% (43 to 61) | 19.7 s, 45% (35 to 52) |
+| EuroSAT | small CNN | scratch (baseline) | 35.2 s | 35.6 s |
+
+Did the conclusions change? The direction did not: every backbone and approach on both datasets still reaches the primary target faster than scratch (all intervals above zero), cheap MobileNets still save the most. The size of the saving is lower in the rerun (22% to 71%, earlier run 45% to 76%): pretrained models took 0% to 26% longer, the scratch CNN's time was flat or shorter, and all old and new intervals overlap. The cause was not isolated; the rerun had the higher background load. Where transfer learning does not help, the rerun strengthens the finding. At the 60% target:
+
+| Dataset | Backbone | Approach | Earlier run: reduction (95% CI) | Rerun 2026-10-17: reduction (95% CI) |
+|---|---|---|---|---|
+| eurosat | MobileNetV2 | frozen | 48% (43 to 53) | 38% (31 to 43) |
+| eurosat | ResNet50 | finetune | -22% (-36 to -12) | -38% (-53 to -27) |
+| eurosat | EfficientNetB0 | finetune | -24% (-37 to -13) | -43% (-59 to -31) |
+| flowers | ResNet50 | finetune | -33% (-109 to 15) | -79% (-110 to -51) |
+| flowers | EfficientNetB0 | finetune | -37% (-117 to 13) | -92% (-124 to -61) |
+| flowers | MobileNetV2 | frozen | 32% (-24 to 61) | 18% (3 to 31) |
+
+Data-efficiency and ablation seconds moved the same way (comparison tables in `docs/runs/idle-2026-10-17/comparison.md`): the ordering of ablation settings and the accuracy findings are unchanged; at the lenient 50% target the time saving of fine-tuned flowers models is about zero at 25 to 100 images per class and negative with all images (-14%, -17 to -10).
 
 ### 1. Backbones and datasets (5 seeds, all training images, 30 epochs)
 
@@ -228,7 +272,7 @@ python -m tlv.analysis && python -m tlv.plots
 python -m tlv.export_viz --date <YYYY-MM-DD>       # docs/explorer-data.js for the explorer
 ```
 
-The repository already contains these results, so re-running appends to `results/*/per_run.csv`; use `--out` to write elsewhere. The original 10-seed flowers run is reproduced with `python -m tlv.experiment --seeds 0 1 2 3 4 5 6 7 8 9 --epochs 30` followed by `python -m tlv.aggregate`. Timings from your machine will differ; relative reductions and epoch counts are the comparable quantities.
+The timing rerun of 2026-10-17 used `bash scripts/run_queue_idle.sh` (same suites, written to `results/idle_<date>/`, with a 60-second CPU check before each batch via `scripts/idle_gate.ps1`, Windows PowerShell), then `python -m tlv.analysis --results results/idle_2026-10-17`, `python -m tlv.plots --results results/idle_2026-10-17 --out docs/figures/rerun-2026-10-17`, `python -m tlv.export_viz --results results/idle_2026-10-17 --hardware results/idle_2026-10-17/hardware.json --date 2026-10-17 --explorer-out docs/explorer-data-rerun-2026-10-17.js --var EXPLORER_RERUN --note "..."` and `python scripts/compare_idle_rerun.py --new results/idle_2026-10-17 --out docs/runs/idle-2026-10-17/comparison.md`. The repository already contains these results, so re-running appends to `results/*/per_run.csv`; use `--out` to write elsewhere. The original 10-seed flowers run is reproduced with `python -m tlv.experiment --seeds 0 1 2 3 4 5 6 7 8 9 --epochs 30` followed by `python -m tlv.aggregate`. Timings from your machine will differ; relative reductions and epoch counts are the comparable quantities.
 
 ## Project structure
 
@@ -250,10 +294,11 @@ src/tlv/experiment.py   original flowers/MobileNetV2 runner;  aggregate.py, expo
 tests/                  pytest suite (69 tests; the 8 model tests need TensorFlow, no weights are downloaded)
 configs/lr_choices.json learning rates chosen on the pilot seed
 scripts/run_queue.sh    the experiment queue used for these results
+scripts/run_queue_idle.sh, idle_gate.ps1, idle_check.ps1, compare_idle_rerun.py   the 2026-10-17 timing rerun and its old-versus-new tables
 results/                per-run and per-epoch CSVs by suite, summary_*.json/.md, gradcam/, hardware.json, split manifests
 docs/index.html         static explorer (opens from disk); docs/curves.js, docs/explorer-data.js: its data
 docs/figures/           figures used in this README
-docs/runs/              run logs (2026-10-14 original, 2026-10-15 extension), pilot sweeps, queue progress
+docs/runs/              run logs (2026-10-14 original, 2026-10-15 extension, 2026-10-17 timing rerun), pilot sweeps, queue progress
 .github/workflows/ci.yml  lint, type check and fast tests (never the long experiments)
 ```
 
@@ -266,7 +311,7 @@ docs/runs/              run logs (2026-10-14 original, 2026-10-15 extension), pi
 ## Limitations
 
 - **Small tasks.** Two datasets, 1,200 images each, 96 px images (EuroSAT up-scaled from 64 px), 720 training images at most. Results may differ for larger images, many more classes, more data or domains far from ImageNet. Test sets have 240 images, so test-accuracy differences below roughly 2 to 3 points are within noise.
-- **Shared machine, seconds are noisier than epochs.** The runs were made on a desktop that other jobs were also using. The share of CPU used by other programs during each fit is recorded (`bg_cpu_fraction`; median 0.17 to 0.35 per timed suite, 0.15 being the lowest ever seen, 10 early flowers backbone runs above 0.5; the accuracy-only pilot ran under heavier load). Repeating the backbone analysis without runs above 0.5 changes every reduction by at most 6 points (`results/summary_*_lowbg.md`). Relative reductions and epoch counts are more transferable than seconds, and seconds are not comparable between suites run at different times.
+- **Shared machine, seconds are noisier than epochs; the 2026-10-17 rerun was not idle either.** The rerun meant to remove this was made while a program of the machine's owner kept the CPU busy: its background CPU share (median 0.40 to 0.57 per suite) was higher than in the earlier run (0.18 to 0.35), and the pretrained models' seconds rose by 0% to 26% (scratch: flat or lower), shrinking every time reduction by 5 to 23 points; see "Timing rerun". A truly idle machine has not been measured. The earlier runs were made on a desktop that other jobs were also using. The share of CPU used by other programs during each fit is recorded (`bg_cpu_fraction`; median 0.17 to 0.35 per timed suite, 0.15 being the lowest ever seen, 10 early flowers backbone runs above 0.5; the accuracy-only pilot ran under heavier load). Repeating the backbone analysis without runs above 0.5 changes every reduction by at most 6 points (`results/summary_*_lowbg.md`). Relative reductions and epoch counts are more transferable than seconds, and seconds are not comparable between suites run at different times.
 - **A modest, lightly tuned baseline.** One small scratch CNN; its learning rate came from a one-seed, 8-epoch, three-value pilot, and on EuroSAT several pilot choices sit at the lowest value of the grid (1e-4), so better rates may exist. Pretrained backbones were tuned the same way.
 - **Seeds and splits.** 5 seeds for the main studies and 3 for the ablations (wide, sometimes degenerate intervals). Seeds change initialisation, shuffling and augmentation, and for the data-efficiency study also the training subset; the validation and test sets are fixed.
 - **Target and budget effects.** The primary target is derived from the same runs; targets the scratch model never reaches give lower bounds, not point estimates; time-to-target has epoch granularity and includes graph tracing in epoch 1. In the data-efficiency study the epoch budget is raised for tiny sets (documented rule) and the validation set is larger than the smallest training sets.
@@ -278,7 +323,7 @@ docs/runs/              run logs (2026-10-14 original, 2026-10-15 extension), pi
 
 - A stronger from-scratch baseline with a proper learning-rate and architecture search, to test how much of the gap it closes.
 - Datasets further from ImageNet (medical, spectral) and larger images; a finer grid of training-set sizes beyond 144 per class to see where the accuracy gap closes.
-- Vary the data split as well as the seed; repeat on a quiet or dedicated machine (or pin CPU cores) for tighter timing intervals; profile where epoch time goes (tracing, input pipeline, forward, backward).
+- Vary the data split as well as the seed; repeat the timed suites on a machine that is really quiet (the 2026-10-17 attempt was not; `scripts/run_queue_idle.sh` is ready) or dedicated, or pin CPU cores, for tighter timing intervals; profile where epoch time goes (tracing, input pipeline, forward, backward).
 - Learning-rate warm-up or layer-wise rates for fine-tuning, to see whether the collapse at 1e-3 can be avoided; more seeds for the ablations.
 - Quantitative explanation checks across more seeds and a finer-grained CAM (earlier layers, Score-CAM).
 

@@ -133,8 +133,11 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
       <select id="dataset"></select>
       <label for="backbone">Pretrained backbone</label>
       <select id="backbone"></select>
+      <label for="runsel">Run</label>
+      <select id="runsel"></select>
     </div>
     <p class="note" id="selection-note" style="margin:0"></p>
+    <p class="note" id="run-note" style="margin:0"></p>
     <div class="slider-row">
       <label for="target">Target validation accuracy</label>
       <input id="target" type="range" min="0.30" max="0.95" step="0.01" value="0.60" aria-describedby="target-out">
@@ -249,14 +252,16 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 
 <script src="curves.js"></script>
 <script src="explorer-data.js"></script>
+<script src="explorer-data-rerun-2026-10-17.js"></script>
 <script>
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
-  var LEGACY = window.CURVES, E = window.EXPLORER;
+  var LEGACY = window.CURVES, EARLIER = window.EXPLORER, RERUN = window.EXPLORER_RERUN;
+  var E = RERUN || EARLIER;
   if (!LEGACY && !E) { document.querySelector("main").insertAdjacentHTML("beforeend", '<p class="fail">curves.js did not load.</p>'); return; }
   var BB_LABELS = { mobilenetv2: "MobileNetV2", mobilenetv3small: "MobileNetV3Small", efficientnetb0: "EfficientNetB0", resnet50: "ResNet50" };
-  var state = { ds: "flowers", bb: "mobilenetv2" };
+  var state = { ds: "flowers", bb: "mobilenetv2", run: RERUN ? "rerun" : "earlier" };
   var D, APPS;
   var LABELS = { scratch: "From scratch", frozen: "Feature extraction (frozen)", finetune: "Fine-tuning" };
   var SHORT = { scratch: "Scratch", frozen: "Frozen", finetune: "Fine-tune" };
@@ -278,7 +283,7 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
   // Flowers + MobileNetV2 shows the original 10-seed run (curves.js); every other
   // combination comes from the suite runs in explorer-data.js (5 seeds).
   function selection() {
-    if (state.ds === "flowers" && state.bb === "mobilenetv2" && LEGACY) return LEGACY;
+    if (state.ds === "flowers" && state.bb === "mobilenetv2" && LEGACY && state.run === "earlier") return LEGACY;
     var d = E.datasets[state.ds], b = d.backbones[state.bb];
     var c = { scratch: d.scratch.runs, frozen: b.frozen.runs, finetune: b.finetune.runs };
     return { meta: { date: E.meta.date, n_seeds: c.scratch.length, hardware: E.meta.hardware, epochs: c.scratch[0].seconds.length },
@@ -609,7 +614,7 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
   function fillBackbones() {
     var names = ["mobilenetv2"];
     if (E && E.datasets[state.ds]) Object.keys(E.datasets[state.ds].backbones).forEach(function (b) { if (names.indexOf(b) < 0) names.push(b); });
-    names = names.filter(function (b) { return (state.ds === "flowers" && b === "mobilenetv2" && LEGACY) || (E && E.datasets[state.ds].backbones[b] && E.datasets[state.ds].backbones[b].finetune); });
+    names = names.filter(function (b) { return (state.ds === "flowers" && b === "mobilenetv2" && LEGACY && state.run === "earlier") || (E && E.datasets[state.ds].backbones[b] && E.datasets[state.ds].backbones[b].finetune); });
     bbSel.innerHTML = "";
     names.forEach(function (b) { var o = document.createElement("option"); o.value = b; o.textContent = BB_LABELS[b] || b; bbSel.appendChild(o); });
     if (names.indexOf(state.bb) < 0) state.bb = names[0];
@@ -619,8 +624,19 @@ details summary { cursor: pointer; font-weight: 600; min-height: 32px; }
   if (LEGACY) dsNames.push("flowers");
   if (E) Object.keys(E.datasets).forEach(function (d) { if (dsNames.indexOf(d) < 0 && E.datasets[d].scratch) dsNames.push(d); });
   dsNames.forEach(function (d) { var o = document.createElement("option"); o.value = d; o.textContent = DS_LABELS[d] || d; dsSel.appendChild(o); });
+  var runSel = document.getElementById("runsel");
+  var RUN_LABELS = { rerun: "Rerun 2026-10-17", earlier: "Earlier run (shared CPU), 2026-10-14/15" };
+  var RUN_NOTES = { earlier: "Earlier run (shared CPU): other programs used a median of 0.18 to 0.35 of the CPU during the timed suites (10 early flowers backbone runs above 0.5). Kept for comparison." };
+  if (RERUN) { var ro = document.createElement("option"); ro.value = "rerun"; ro.textContent = RUN_LABELS.rerun; runSel.appendChild(ro); }
+  if (EARLIER) { var eo = document.createElement("option"); eo.value = "earlier"; eo.textContent = RUN_LABELS.earlier; runSel.appendChild(eo); }
+  runSel.value = state.run;
+  runSel.addEventListener("change", function () {
+    state.run = runSel.value; E = state.run === "rerun" ? RERUN : EARLIER;
+    fillBackbones(); rebuild();
+  });
   function provenance() {
     var m = D.meta, legacy = D === LEGACY;
+    document.getElementById("run-note").textContent = state.run === "rerun" && RERUN && RERUN.meta.note ? RERUN.meta.note : (RUN_NOTES[state.run] || "");
     document.getElementById("provenance").textContent =
       "Recorded " + m.date + ", " + m.n_seeds + " seeds per approach, " + m.epochs + " epochs each. Hardware: " +
       m.hardware.cpu + ", " + m.hardware.logical_cores + " logical cores, CPU only. Times are wall-clock seconds from a monotonic timer and include the per-epoch validation pass.";
