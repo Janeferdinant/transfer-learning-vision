@@ -21,7 +21,7 @@ Independent CPU measurements on two public image datasets (TF Flowers, EuroSAT R
 
 How much training time and how much labelled data does transfer learning save compared with training from scratch, and when does the saving disappear? The repository measures this on a CPU with a defined metric (time-to-target), identical protocols across approaches, several seeds and bootstrap intervals, and ships an interactive explorer of every recorded training curve.
 
-**Independent experiment on public data. The 30% reduction in training time on the CV is a reported result from an earlier project and is not reproduced here.** The original project's data and code are not available, and nothing in this repository claims to be that result.
+**Independent experiment on public data.** This study measures time-to-target and data efficiency on two public datasets (TF Flowers, EuroSAT RGB) with four ImageNet backbones on one CPU setup. It makes no claim about any other project, dataset or system.
 
 ## Demo
 
@@ -317,7 +317,7 @@ docs/runs/              run logs (2026-10-14 original, 2026-10-15 extension, 202
 - **Target and budget effects.** The primary target is derived from the same runs; targets the scratch model never reaches give lower bounds, not point estimates; time-to-target has epoch granularity and includes graph tracing in epoch 1. In the data-efficiency study the epoch budget is raised for tiny sets (documented rule) and the validation set is larger than the smallest training sets.
 - **Fine-tuning depth is counted in blocks**, whose size differs between backbones, so "4 blocks" is not the same fraction of every network.
 - **Grad-CAM** is shown for two models of one seed, at coarse resolution, with the caveats listed above.
-- **Not the CV result**: the original project's data and code are unavailable; this experiment neither reproduces nor validates the 30% figure.
+- **Scope**: the results apply to these two datasets, four backbones and one CPU setup; the study makes no claim about any other project, dataset or system.
 
 ## Future scope
 
